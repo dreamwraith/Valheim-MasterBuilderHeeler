@@ -77,6 +77,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
                 ThemeColorConfig.GizmoUpArrowColor.Value,
                 ThemeColorConfig.GizmoForwardArrowColor.Value);
 
+            _activeTheme.Scale = ModConfig.GizmoScale.Value;
             _activeTheme.Render(in context);
             _wasVisible = true;
         }

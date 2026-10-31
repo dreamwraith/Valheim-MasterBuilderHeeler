@@ -23,6 +23,8 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
 
         public GizmoStyle Style => GizmoStyle.ProceduralWireframe;
 
+        public float Scale { get; set; } = 1.0f;
+
         public void Render(in GizmoDrawContext context)
         {
             EnsureResources();
@@ -35,7 +37,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
             DrawAxisRing(in context, _yRingMesh, _material, RotationAxis.Yaw, context.YawRingColor);
             DrawAxisRing(in context, _zRingMesh, _material, RotationAxis.Roll, context.RollRingColor);
 
-            float arrowScale = context.Radius * ArrowLengthScale;
+            float arrowScale = context.Radius * Scale * ArrowLengthScale;
             DrawArrow(_arrowMesh, _material, context.Center, context.RightAxis, context.RightArrowColor, arrowScale);
             DrawArrow(_arrowMesh, _material, context.Center, context.UpAxis, context.UpArrowColor, arrowScale);
             DrawArrow(_arrowMesh, _material, context.Center, context.ForwardAxis, context.ForwardArrowColor, arrowScale);
@@ -114,7 +116,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
             Color ringColor = baseColor;
             ringColor.a *= isActive ? ActiveRingAlpha : InactiveRingAlpha;
 
-            float ringScale = context.Radius * (isActive ? ActiveRingScaleMultiplier : 1.0f);
+            float ringScale = context.Radius * Scale * (isActive ? ActiveRingScaleMultiplier : 1.0f);
             _propertyBlock.SetColor(ColorPropertyId, ringColor);
             Matrix4x4 matrix = Matrix4x4.TRS(context.Center, context.RingBasis, Vector3.one * ringScale);
             Graphics.DrawMesh(ringMesh, matrix, material, 0, null, 0, _propertyBlock);

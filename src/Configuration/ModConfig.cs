@@ -21,6 +21,7 @@ namespace MasterBuilderHeeler.Configuration
         public static ConfigEntry<bool> ValidateStationRangeAtPieceLocation { get; private set; } = null!;
         public static ConfigEntry<bool> RequireHammerForHoverInspection { get; private set; } = null!;
         public static ConfigEntry<GizmoStyle> GizmoRendererStyle { get; private set; } = null!;
+        public static ConfigEntry<float> GizmoScale { get; private set; } = null!;
         public static ConfigEntry<ModLogLevel> LoggingLevel { get; private set; } = null!;
 
         public static ConfigEntry<bool> EnablePrecisionModeByDefault { get; private set; } = null!;
@@ -125,11 +126,15 @@ namespace MasterBuilderHeeler.Configuration
             ValidateStationRangeAtPieceLocation = BindSynced(config, "General", "ValidateStationRangeAtPieceLocation", false,
                 "Checks crafting station build range at the target piece position instead of the player position during standard placement. The Build Camera always uses the target piece position.");
 
-            RequireHammerForHoverInspection = BindSynced(config, "General", "RequireHammerForHoverInspection", false,
+            RequireHammerForHoverInspection = BindSynced(config, "General", "RequireHammerForHoverInspection", true,
                 "Requires an equipped build tool to display the hovered piece info panel. Disable to show hovered piece info at all times.");
 
             GizmoRendererStyle = BindClient(config, "General", "GizmoRendererStyle", GizmoStyle.ProceduralWireframe,
                 "Visual style for the rotation gizmo (set to Disabled to hide the gizmo).");
+
+            GizmoScale = BindClient(config, "General", "GizmoScale", 1.0f,
+                "Size multiplier for the rotation gizmo.",
+                new AcceptableValueRange<float>(0.25f, 4.0f));
 
             LoggingLevel = BindClient(config, "General", "LoggingLevel", ModLogLevel.Info,
                 "BepInEx log detail level (None = silent, Info = startup and edits, Debug = detailed actions).");
