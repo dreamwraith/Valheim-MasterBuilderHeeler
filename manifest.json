@@ -1,6 +1,6 @@
 {
   "name": "MasterBuilderHeeler",
-  "version_number": "1.0.0",
+  "version_number": "1.0.1",
   "website_url": "https://github.com/dreamwraith/Valheim-MasterBuilderHeeler",
   "description": "Precision building tools for Valheim: pitch, yaw, and roll rotation, grid snapping, piece nudging, ghost freeze, in-place piece moving, piece sampling, build camera, and build info panels.",
   "dependencies": [

@@ -39,7 +39,7 @@ MasterBuilderHeeler draws inspiration from the following Valheim mods and commun
 - **Step presets and scaling:** Switch between Fine, Standard, and Coarse rotation and nudge steps, and scale step sizes up or down on the fly.
 - **Ghost freeze and piece nudging:** Pin the placement ghost in place to inspect alignment from any angle, and nudge pieces along Local or World axes.
 - **Grid snapping and overlay:** Snap piece pivots or manual snap points to a configurable World or piece-anchored Local grid, with an optional terrain-following or flat grid overlay.
-- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, health, and structural support. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu, and containers stay locked during an edit.
+- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, health, and structural support. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu, and containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends.
 - **Placement rules:** Snapped, nudged, frozen, and edited pieces skip the base game rules for wood surfaces, floors, ceilings, non-supporting pieces, and required connections. Ward, no-build zone, and clipping checks still apply, and unsupported pieces still break.
 - **Piece and rotation sampling:** Select the aimed piece directly in the Hammer build menu or copy a placed piece's 3D rotation onto the active ghost. `PrecisionCopyBehavior` sets how the sample keys work with native Copy Piece.
 - **Build reach:** `EnableExtendedAvatarReach` extends player placement, repair, dismantle, and in-place edit reach to `MaxBuildReachDistance`. `ValidateStationRangeAtPieceLocation` checks crafting station range at the target piece instead of the player. Both are off by default. The Build Camera always checks station range at the target piece.
@@ -58,7 +58,7 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 
 | Section | Sync Policy | Description |
 | :--- | :--- | :--- |
-| `General` | Server / Client | Master enable toggle, configuration lock, feature toggles, extended build reach, station range rules, hovered piece Hammer requirement, gizmo style, and log level. |
+| `General` | Server / Client | Master enable toggle, configuration lock, feature toggles, extended build reach, station range rules, hovered piece Hammer requirement, gizmo style and scale, and log level. |
 | `Precision Settings` | Conditional (Client) | Default Precision and Roof Mode states, copy behavior, plus Fine, Standard, and Coarse rotation and nudge step sizes. |
 | `Grid Settings` | Conditional (Client) / Client | Default grid cell size, optional vertical snap, and grid overlay radius, height offsets, and colors. |
 | `Build Camera` | Server / Conditional (Client) / Client | Tether radius, maximum build reach, movement speeds, mouse sensitivity, and camera smoothing. |
