@@ -193,18 +193,17 @@ namespace MasterBuilderHeeler.Core.Placement
                 prefabName);
         }
 
-        public static void SuppressPlacementInputIfEditing(Player player)
+        public static void SuppressPlacementInputIfEditing(ref bool takeInput)
         {
             if (!ModConfig.EnableMod.Value || BuildStateManager.EditState != PlacementEditState.InPlaceEdit)
             {
                 return;
             }
 
-            // UpdatePlacement fires buffered clicks if Time.time - pressedTime < 0.2f. -9999f is what the game itself uses to clear them
-            // so we copy it i guess. dogshit solution. redseiko will probably also yell at me here and say theres a better way.
-            player.m_blockRemove = true;
-            player.m_removePressedTime = -9999f;
-            player.m_placePressedTime = -9999f;
+            // Yep, OK, well at least i figured it out before redseiko yelled at me. turns out my fix WAS stupid
+            // and i was copying the wrong bit of base game code. instead i just need to override takeInput to false.
+            // this also fixes the bug I missed where you could literally place a piece while in edit mode... fml.
+            takeInput = false;
         }
 
         public static void OnSelectedPieceChanging(Player player, Vector2Int pieceIndex)

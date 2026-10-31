@@ -17,8 +17,8 @@ namespace MasterBuilderHeeler.Patches
 
         [HarmonyPatch(nameof(Player.UpdatePlacement))]
         [HarmonyPrefix]
-        private static void UpdatePlacementPrefix(Player __instance) =>
-            PlacementGhostController.SuppressPlacementInputIfEditing(__instance);
+        private static void UpdatePlacementPrefix(ref bool takeInput) =>
+            PlacementGhostController.SuppressPlacementInputIfEditing(ref takeInput);
 
         [HarmonyPatch(nameof(Player.SetSelectedPiece), typeof(Vector2Int))]
         [HarmonyPrefix]
