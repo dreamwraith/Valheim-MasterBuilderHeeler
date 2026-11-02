@@ -11,7 +11,6 @@ namespace MasterBuilderHeeler.Configuration
 
         public static ConfigSync ConfigSync { get; private set; } = null!;
 
-        public static ConfigEntry<bool> LockConfiguration { get; private set; } = null!;
         public static ConfigEntry<bool> EnableMod { get; private set; } = null!;
         public static ConfigEntry<bool> EnablePrecision { get; private set; } = null!;
         public static ConfigEntry<bool> EnableBuildCamera { get; private set; } = null!;
@@ -101,9 +100,6 @@ namespace MasterBuilderHeeler.Configuration
                 ModRequired = false,
                 ModRequirementMode = ModRequirementMode.Conditional
             };
-
-            LockConfiguration = BindLocking(config, "General", "LockConfiguration", true,
-                "Locks server-controlled settings so only server administrators can change them.");
 
             EnableMod = BindSynced(config, "General", "EnableMod", true,
                 "Enables or disables MasterBuilderHeeler.");
@@ -398,18 +394,6 @@ namespace MasterBuilderHeeler.Configuration
                 $"Background color and opacity for the {panelDescription}.");
 
             return new PanelLayoutSettings(show, offsetX, offsetY, fontSize, backgroundColor);
-        }
-
-        private static ConfigEntry<bool> BindLocking(
-            ConfigFile config,
-            string section,
-            string key,
-            bool defaultValue,
-            string description)
-        {
-            ConfigEntry<bool> entry = BindOrdered(config, section, key, defaultValue, description, null, null);
-            ConfigSync.AddLockingConfigEntry(entry);
-            return entry;
         }
 
         private static ConfigEntry<T> BindSynced<T>(

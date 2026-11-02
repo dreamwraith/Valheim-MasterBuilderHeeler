@@ -71,7 +71,7 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 | `Keybindings (Keyboard & Mouse)` | Client | Shortcuts and modifier combinations for all build, rotation, nudge, grid, camera, sampling, and edit actions. |
 | `Gizmo Colors` / `HUD Colors` | Client | Color and opacity settings for 3D gizmo rings and arrows, HUD text roles, status indicators, and health/stability gradients. |
 
-**Sync policies:** `Client` settings are never synced and stay under each player's control. `Conditional (Server)` settings are server-controlled by default, and administrators can defer them to clients. `Conditional (Client)` settings are client-controlled by default, and administrators can enforce them. A section with more than one policy contains settings of each listed type. `LockConfiguration` keeps server-controlled settings editable by server administrators only.
+**Sync policies:** `Client` settings are never synced and stay under each player's control. `Conditional (Server)` settings are server-controlled by default, and administrators can defer them to clients. `Conditional (Client)` settings are client-controlled by default, and administrators can enforce them. A section with more than one policy contains settings of each listed type. Only server administrators can edit server-controlled settings.
 
 **Keybindings:** Mod keys can be rebound in the `Keybindings (Keyboard & Mouse)` section. Rotation uses the mouse wheel, and Build Camera movement uses the game's movement binds. While a build tool is equipped, the Global panel shows the active bindings. The Precision panel shows its bindings while Precision Mode is on.
 
