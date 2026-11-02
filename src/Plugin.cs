@@ -20,6 +20,7 @@ namespace MasterBuilderHeeler
     [BepInDependency("_shudnal.ConditionalConfigSync", BepInDependency.DependencyFlags.HardDependency)]
     [BepInIncompatibility("Azumatt_and_ValheimPlusDevs.PerfectPlacement")]
     [BepInIncompatibility("Azumatt.BuildCameraCHE")]
+    [BepInIncompatibility("infinity_hammer")]
     public class Plugin : BaseUnityPlugin
     {
         public const string ModGUID = "dreamwraith.MasterBuilderHeeler";

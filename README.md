@@ -119,10 +119,11 @@ Tested with MasterBuilderHeeler:
 
 ### Incompatible Mods
 
-MasterBuilderHeeler does not load when either of these mods is installed. Check the BepInEx log if the mod does not start:
+MasterBuilderHeeler does not load when any of these mods is installed. Check the BepInEx log if the mod does not start:
 
 - **Perfect Placement:** Overlaps placement, rotation, in-place editing, and grid alignment.
 - **Build Camera Custom Hammers Edition:** Overlaps the Build Camera.
+- **Infinity Hammer:** Precision rotation and nudge just don't work with it installed. It's not really either mod's fault, it's a [HarmonyX bug](https://github.com/BepInEx/HarmonyX/issues/65) in the version BepInEx ships, and Infinity Hammer's patch on the game's placement code happens to set it off. BepInEx isn't updating HarmonyX on 5.x, so this stays blocked unless Infinity Hammer changes how it patches that method to avoid user confusion.
 
 ### Overlapping Mods
 
