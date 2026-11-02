@@ -5,6 +5,25 @@ All notable changes to **MasterBuilderHeeler** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-11-01
+
+### Fixed
+
+- Repair and dismantle in Build Camera check workbench range at the piece now, same as placing. No more repairing stuff
+  way out of range just because you're standing next to a workbench.
+- `ValidateStationRangeAtPieceLocation` now covers repair and dismantle on foot too.
+
+### Changed
+
+- Infinity Hammer is flagged as incompatible, so this won't load alongside it. A HarmonyX bug in the version BepInEx ships
+  breaks rotate and nudge in Precision Mode when both are installed, and BepInEx isn't updating 5.x. Details in the README.
+- Fixed a few config descriptions that drifted during dev, and added a settings table and more setup info to the README.
+- Build tooling now matches the rest of my mods.
+
+### Removed
+
+- `LockConfiguration`. Never actually implemented it and forgot to take it out.
+
 ## [1.0.1] - 2026-10-31
 
 *The one where the first bug rears its head*
