@@ -120,7 +120,7 @@ namespace MasterBuilderHeeler.Configuration
                 "Extends player placement, repair, dismantle, and in-place edit reach to MaxBuildReachDistance.");
 
             ValidateStationRangeAtPieceLocation = BindSynced(config, "General", "ValidateStationRangeAtPieceLocation", false,
-                "Checks crafting station build range at the target piece position instead of the player position during standard placement. The Build Camera always uses the target piece position.");
+                "Checks crafting station build range at the target piece position instead of the player position during standard placement, repair, and dismantle. The Build Camera always uses the target piece position.");
 
             RequireHammerForHoverInspection = BindSynced(config, "General", "RequireHammerForHoverInspection", true,
                 "Requires an equipped build tool to display the hovered piece info panel. Disable to show hovered piece info at all times.");

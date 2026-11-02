@@ -21,6 +21,7 @@ namespace MasterBuilderHeeler.Core.Validation
         private static Player.PlacementStatus _prePostfixEditStatus;
 
         public static bool IsValidatingEditedPiece => _isValidatingEditedPiece;
+        public static Piece? RepairOrRemoveTarget { get; set; }
 
         public static bool IsInsideActiveLoadedZone(Vector3 position) =>
             !ZNetScene.instance.OutsideActiveArea(position) && ZoneSystem.instance.IsZoneLoaded(position);
@@ -50,7 +51,10 @@ namespace MasterBuilderHeeler.Core.Validation
                 return;
             }
 
-            GameObject? targetObject = BuildStateManager.GetActiveTargetObject(localPlayer);
+            // repair and dismantle act on a placed piece, so the ghost is the wrong spot even when one is out
+            GameObject? targetObject = RepairOrRemoveTarget
+                ? RepairOrRemoveTarget.gameObject
+                : BuildStateManager.GetActiveTargetObject(localPlayer);
             if (targetObject && targetObject.activeInHierarchy)
             {
                 point = targetObject.transform.position;
