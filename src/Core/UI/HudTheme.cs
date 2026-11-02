@@ -30,6 +30,8 @@ namespace MasterBuilderHeeler.Core.UI
         public static string AxisYawHex { get; private set; } = string.Empty;
         public static string AxisRollHex { get; private set; } = string.Empty;
 
+        public static string StepUltraFineHex { get; private set; } = string.Empty;
+        public static string StepExtraFineHex { get; private set; } = string.Empty;
         public static string StepFineHex { get; private set; } = string.Empty;
         public static string StepCoarseHex { get; private set; } = string.Empty;
         public static string StepCustomHex { get; private set; } = string.Empty;
@@ -105,6 +107,8 @@ namespace MasterBuilderHeeler.Core.UI
             AxisPitchHex = ToHex(ThemeColorConfig.HudAxisPitchColor.Value);
             AxisYawHex = ToHex(ThemeColorConfig.HudAxisYawColor.Value);
             AxisRollHex = ToHex(ThemeColorConfig.HudAxisRollColor.Value);
+            StepUltraFineHex = ToHex(ThemeColorConfig.HudUltraFineStepColor.Value);
+            StepExtraFineHex = ToHex(ThemeColorConfig.HudExtraFineStepColor.Value);
             StepFineHex = ToHex(ThemeColorConfig.HudFineStepColor.Value);
             StepStandardHex = ToHex(ThemeColorConfig.HudStandardStepColor.Value);
             StepCoarseHex = ToHex(ThemeColorConfig.HudCoarseStepColor.Value);
@@ -155,6 +159,8 @@ namespace MasterBuilderHeeler.Core.UI
 
         public static string GetStepColorHex(StepPreset preset) => preset switch
         {
+            StepPreset.UltraFine => StepUltraFineHex,
+            StepPreset.ExtraFine => StepExtraFineHex,
             StepPreset.Fine => StepFineHex,
             StepPreset.Coarse => StepCoarseHex,
             _ => StepStandardHex

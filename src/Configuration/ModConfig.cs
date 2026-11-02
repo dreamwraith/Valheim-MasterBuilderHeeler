@@ -26,12 +26,16 @@ namespace MasterBuilderHeeler.Configuration
         public static ConfigEntry<bool> EnablePrecisionModeByDefault { get; private set; } = null!;
         public static ConfigEntry<bool> EnableRoofModeByDefault { get; private set; } = null!;
         public static ConfigEntry<PrecisionCopyMode> PrecisionCopyBehavior { get; private set; } = null!;
-        public static ConfigEntry<float> FineRotationStep { get; private set; } = null!;
-        public static ConfigEntry<float> StandardRotationStep { get; private set; } = null!;
-        public static ConfigEntry<float> CoarseRotationStep { get; private set; } = null!;
-        public static ConfigEntry<float> FineTranslationStep { get; private set; } = null!;
-        public static ConfigEntry<float> StandardTranslationStep { get; private set; } = null!;
-        public static ConfigEntry<float> CoarseTranslationStep { get; private set; } = null!;
+        public static ConfigEntry<float> RotationStepUltraFine { get; private set; } = null!;
+        public static ConfigEntry<float> RotationStepExtraFine { get; private set; } = null!;
+        public static ConfigEntry<float> RotationStepFine { get; private set; } = null!;
+        public static ConfigEntry<float> RotationStepStandard { get; private set; } = null!;
+        public static ConfigEntry<float> RotationStepCoarse { get; private set; } = null!;
+        public static ConfigEntry<float> TranslationStepUltraFine { get; private set; } = null!;
+        public static ConfigEntry<float> TranslationStepExtraFine { get; private set; } = null!;
+        public static ConfigEntry<float> TranslationStepFine { get; private set; } = null!;
+        public static ConfigEntry<float> TranslationStepStandard { get; private set; } = null!;
+        public static ConfigEntry<float> TranslationStepCoarse { get; private set; } = null!;
 
         public static ConfigEntry<float> DefaultGridSize { get; private set; } = null!;
         public static ConfigEntry<bool> SnapVerticalToGrid { get; private set; } = null!;
@@ -136,37 +140,53 @@ namespace MasterBuilderHeeler.Configuration
                 "BepInEx log detail level (None = silent, Info = startup and edits, Debug = detailed actions).");
 
             EnablePrecisionModeByDefault = BindConditionalClient(config, "Precision Settings", "EnablePrecisionModeByDefault", true,
-                "Enables Precision Mode automatically when equipping a build tool.");
+                "Enables Precision Mode at login and after respawn.");
 
             EnableRoofModeByDefault = BindConditionalClient(config, "Precision Settings", "EnableRoofModeByDefault", false,
-                "Aligns rotation and nudge axes along 45-degree corner roof slopes automatically when equipping a build tool.");
+                "Aligns rotation and nudge axes along 45-degree corner roof slopes at login, after respawn, and on Reset Build Settings.");
 
             PrecisionCopyBehavior = BindConditionalClient(config, "Precision Settings", "PrecisionCopyBehavior", PrecisionCopyMode.SideBySide,
                 "Sets how native Copy Piece and the sample keys operate while Precision Mode is on (SideBySide = keep both, OverrideNative = native copy also copies full rotation, DisableNative = sample keys only, DisableCustom = native copy only).");
 
-            FineRotationStep = BindConditionalClient(config, "Precision Settings", "FineRotationStep", 1.0f,
-                "Rotation step in degrees when Fine Step is active.",
-                new AcceptableValueRange<float>(0.1f, 10.0f));
+            RotationStepUltraFine = BindConditionalClient(config, "Precision Settings", "RotationStepUltraFine", 1.0f,
+                "Rotation step in degrees when the UltraFine step preset is active.",
+                new AcceptableValueRange<float>(0.1f, 5.0f));
 
-            StandardRotationStep = BindConditionalClient(config, "Precision Settings", "StandardRotationStep", 15.0f,
-                "Rotation step in degrees when Standard Step is active.",
-                new AcceptableValueRange<float>(1.0f, 90.0f));
+            RotationStepExtraFine = BindConditionalClient(config, "Precision Settings", "RotationStepExtraFine", 2.5f,
+                "Rotation step in degrees when the ExtraFine step preset is active.",
+                new AcceptableValueRange<float>(0.5f, 10.0f));
 
-            CoarseRotationStep = BindConditionalClient(config, "Precision Settings", "CoarseRotationStep", 45.0f,
-                "Rotation step in degrees when Coarse Step is active.",
-                new AcceptableValueRange<float>(5.0f, 90.0f));
+            RotationStepFine = BindConditionalClient(config, "Precision Settings", "RotationStepFine", 7.5f,
+                "Rotation step in degrees when the Fine step preset is active.",
+                new AcceptableValueRange<float>(1.0f, 15.0f));
 
-            FineTranslationStep = BindConditionalClient(config, "Precision Settings", "FineTranslationStep", 0.02f,
-                "Nudge step in meters when Fine Step is active.",
-                new AcceptableValueRange<float>(0.005f, 0.2f));
+            RotationStepStandard = BindConditionalClient(config, "Precision Settings", "RotationStepStandard", 22.5f,
+                "Rotation step in degrees when the Standard step preset is active.",
+                new AcceptableValueRange<float>(5.0f, 45.0f));
 
-            StandardTranslationStep = BindConditionalClient(config, "Precision Settings", "StandardTranslationStep", 0.25f,
-                "Nudge step in meters when Standard Step is active.",
-                new AcceptableValueRange<float>(0.05f, 2.0f));
+            RotationStepCoarse = BindConditionalClient(config, "Precision Settings", "RotationStepCoarse", 45.0f,
+                "Rotation step in degrees when the Coarse step preset is active.",
+                new AcceptableValueRange<float>(15.0f, 90.0f));
 
-            CoarseTranslationStep = BindConditionalClient(config, "Precision Settings", "CoarseTranslationStep", 1.0f,
-                "Nudge step in meters when Coarse Step is active.",
-                new AcceptableValueRange<float>(0.2f, 5.0f));
+            TranslationStepUltraFine = BindConditionalClient(config, "Precision Settings", "TranslationStepUltraFine", 0.02f,
+                "Nudge step in meters when the UltraFine step preset is active.",
+                new AcceptableValueRange<float>(0.005f, 0.1f));
+
+            TranslationStepExtraFine = BindConditionalClient(config, "Precision Settings", "TranslationStepExtraFine", 0.05f,
+                "Nudge step in meters when the ExtraFine step preset is active.",
+                new AcceptableValueRange<float>(0.01f, 0.2f));
+
+            TranslationStepFine = BindConditionalClient(config, "Precision Settings", "TranslationStepFine", 0.125f,
+                "Nudge step in meters when the Fine step preset is active.",
+                new AcceptableValueRange<float>(0.02f, 0.5f));
+
+            TranslationStepStandard = BindConditionalClient(config, "Precision Settings", "TranslationStepStandard", 0.25f,
+                "Nudge step in meters when the Standard step preset is active.",
+                new AcceptableValueRange<float>(0.05f, 1.0f));
+
+            TranslationStepCoarse = BindConditionalClient(config, "Precision Settings", "TranslationStepCoarse", 1.0f,
+                "Nudge step in meters when the Coarse step preset is active.",
+                new AcceptableValueRange<float>(0.25f, 5.0f));
 
             DefaultGridSize = BindConditionalClient(config, "Grid Settings", "DefaultGridSize", 1.0f,
                 "Starting grid cell size in meters.",

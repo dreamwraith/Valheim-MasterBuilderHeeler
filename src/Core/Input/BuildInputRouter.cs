@@ -31,8 +31,8 @@ namespace MasterBuilderHeeler.Core.Input
                 new ToggleActionBinding(ModInputManager.ToggleBuildCameraButton, _ => BuildStateManager.ToggleBuildCamera(), isBuildCameraEnabled),
                 new ToggleActionBinding(ModInputManager.ToggleGhostFreezeButton, PlacementGhostController.ToggleGhostFreeze, isPrecisionActive),
 
-                new ToggleActionBinding(ModInputManager.ToggleFineStepButton, _ => BuildStateManager.ToggleFineStep(), isPrecisionActive),
-                new ToggleActionBinding(ModInputManager.ToggleCoarseStepButton, _ => BuildStateManager.ToggleCoarseStep(), isPrecisionActive),
+                new ToggleActionBinding(ModInputManager.DecreaseStepPresetButton, _ => BuildStateManager.ShiftStepPreset(-1), isPrecisionActive),
+                new ToggleActionBinding(ModInputManager.IncreaseStepPresetButton, _ => BuildStateManager.ShiftStepPreset(1), isPrecisionActive),
                 new ToggleActionBinding(ModInputManager.DoubleStepMultiplierButton, _ => BuildStateManager.DoubleStepMultiplier(), isPrecisionActive),
                 new ToggleActionBinding(ModInputManager.HalveStepMultiplierButton, _ => BuildStateManager.HalveStepMultiplier(), isPrecisionActive),
                 new ToggleActionBinding(ModInputManager.ResetStepMultiplierButton, _ => BuildStateManager.ResetStepMultiplier(), isPrecisionActive),
@@ -47,6 +47,7 @@ namespace MasterBuilderHeeler.Core.Input
 
                 new ToggleActionBinding(ModInputManager.CycleTranslationFrameButton, _ => BuildStateManager.CycleTranslationFrame(), isPrecisionActive),
                 new ToggleActionBinding(ModInputManager.ResetNudgeButton, _ => PieceTranslationEngine.ResetNudge(), isPrecisionActive),
+                new ToggleActionBinding(ModInputManager.ResetBuildSettingsButton, _ => PlacementGhostController.ResetBuildSettings(), isPrecisionActive),
 
                 new ToggleActionBinding(ModInputManager.ToggleGridSnapButton, _ => BuildStateManager.ToggleGridSnap(), isGridEnabled),
                 new ToggleActionBinding(ModInputManager.ToggleGridOverlayButton, PlacementGhostController.ToggleGridOverlay, isGridEnabled),

@@ -9,8 +9,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
     public sealed class PrecisionInfoPanel : HudPanelBase
     {
         private readonly HudLabelRow _stepSummaryRow;
-        private readonly HudLabelRow _fineStepRow;
-        private readonly HudLabelRow _coarseStepRow;
+        private readonly HudLabelRow _stepPresetRow;
         private readonly HudLabelRow _adjustStepRow;
         private readonly HudLabelRow _resetStepRow;
         private readonly HudLabelRow _rotationFrameRow;
@@ -26,6 +25,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
         private readonly HudLabelRow _sideNudgeRow;
         private readonly HudLabelRow _verticalNudgeRow;
         private readonly HudLabelRow _resetNudgeRow;
+        private readonly HudLabelRow _resetSettingsRow;
 
         private PanelStateSnapshot _lastSnapshot;
         private bool _hasValidSnapshot;
@@ -37,8 +37,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             Panel.SetFloatingHeader("Precision");
 
             _stepSummaryRow = Panel.AddRow("Step Size:");
-            _fineStepRow = Panel.AddRow("Fine Step:");
-            _coarseStepRow = Panel.AddRow("Coarse Step:");
+            _stepPresetRow = Panel.AddRow("Step Preset:");
             _adjustStepRow = Panel.AddRow("Adjust Step:");
             _resetStepRow = Panel.AddRow("Reset Step:");
             _rotationFrameRow = Panel.AddRow("Rotation Frame:");
@@ -54,6 +53,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             _sideNudgeRow = Panel.AddRow(string.Empty);
             _verticalNudgeRow = Panel.AddRow(string.Empty);
             _resetNudgeRow = Panel.AddRow("Reset Nudge:");
+            _resetSettingsRow = Panel.AddRow("Reset Settings:");
 
             Panel.SetAnchors(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f));
 
@@ -109,26 +109,11 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             _lastSnapshot = snapshot;
             _hasValidSnapshot = true;
 
-            string fineKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ToggleFineStepKey);
-            string coarseKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ToggleCoarseStepKey);
             string halveKey = KeyLabelFormatter.Format(KeyboardMouseConfig.HalveStepMultiplierKey);
             string doubleKey = KeyLabelFormatter.Format(KeyboardMouseConfig.DoubleStepMultiplierKey);
             string resetScaleKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ResetStepMultiplierKey);
 
-            _fineStepRow.SetValue(HudTheme.FormatKeycapToggle(
-                fineKey,
-                snapshot.ActiveStepPreset == StepPreset.Fine,
-                HudTheme.StepFineHex,
-                HudGlyphs.ToggleActive,
-                HudGlyphs.ToggleInactive));
-
-            _coarseStepRow.SetValue(HudTheme.FormatKeycapToggle(
-                coarseKey,
-                snapshot.ActiveStepPreset == StepPreset.Coarse,
-                HudTheme.StepCoarseHex,
-                HudGlyphs.ToggleActive,
-                HudGlyphs.ToggleInactive));
-
+            _stepPresetRow.SetValue(FormatStepPresetRow(snapshot.ActiveStepPreset));
             _adjustStepRow.SetValue(HudTheme.Keycap($"{halveKey}{HudTheme.PipeSeparator}{doubleKey}"));
             _resetStepRow.SetValue(HudTheme.Keycap(resetScaleKey));
 
@@ -221,6 +206,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             _sideNudgeRow.SetValue(HudTheme.Keycap(HudKeybindFormatter.FormatSideNudge()));
             _verticalNudgeRow.SetValue(HudTheme.Keycap(HudKeybindFormatter.FormatVerticalNudge()));
             _resetNudgeRow.SetValue(HudTheme.Keycap(KeyLabelFormatter.Format(KeyboardMouseConfig.ResetNudgeKey)));
+            _resetSettingsRow.SetValue(HudTheme.Keycap(KeyLabelFormatter.Format(KeyboardMouseConfig.ResetBuildSettingsKey)));
 
             Panel.UpdateClampedWidth();
         }
@@ -258,6 +244,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             string stepSample = $"5.6{HudGlyphs.Degree}{HudTheme.BrokenBarSeparator}0.125m{HudTheme.BrokenBarSeparator}0.125x";
 
             Panel.ObserveSampleWidths(string.Empty, $"<color={HudTheme.StepCustomHex}><b>Custom</b></color> <color={HudTheme.SecondaryValueHex}>{HudTheme.Measure(stepSample)}</color>");
+            Panel.ObserveSampleWidths(string.Empty, FormatStepPresetRow(StepPreset.Fine));
             Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap($"{halveKey}{HudTheme.PipeSeparator}{doubleKey}"));
             Panel.ObserveSampleWidths(string.Empty, $"{HudTheme.Keycap(cycleFrameKey)} {HudTheme.StatusRotationWorld}");
             Panel.ObserveSampleWidths(string.Empty, $"{HudTheme.Keycap(roofModeKey)} {HudTheme.StatusOff}");
@@ -266,6 +253,23 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap(HudKeybindFormatter.FormatForwardNudge()));
             Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap(HudKeybindFormatter.FormatSideNudge()));
             Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap(HudKeybindFormatter.FormatVerticalNudge()));
+        }
+
+        private static string FormatStepPresetRow(StepPreset activePreset)
+        {
+            string decreaseKey = KeyLabelFormatter.Format(KeyboardMouseConfig.DecreaseStepPresetKey);
+            string increaseKey = KeyLabelFormatter.Format(KeyboardMouseConfig.IncreaseStepPresetKey);
+
+            string pips = string.Empty;
+            for (int presetIndex = (int)StepPreset.UltraFine; presetIndex <= (int)StepPreset.Coarse; presetIndex++)
+            {
+                StepPreset preset = (StepPreset)presetIndex;
+                pips += preset == activePreset
+                    ? $"<color={HudTheme.GetStepColorHex(preset)}><b>{HudGlyphs.ToggleActive}</b></color>"
+                    : HudGlyphs.ToggleInactive;
+            }
+
+            return $"{HudTheme.Keycap($"{decreaseKey}{HudTheme.PipeSeparator}{increaseKey}")} {pips}";
         }
 
         private readonly struct PanelStateSnapshot : IEquatable<PanelStateSnapshot>

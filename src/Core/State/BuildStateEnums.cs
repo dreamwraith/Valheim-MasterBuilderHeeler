@@ -11,6 +11,8 @@ namespace MasterBuilderHeeler.Core.State
 
     public enum StepPreset
     {
+        UltraFine,
+        ExtraFine,
         Fine,
         Standard,
         Coarse

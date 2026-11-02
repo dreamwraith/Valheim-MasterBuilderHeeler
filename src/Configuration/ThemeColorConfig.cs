@@ -34,6 +34,8 @@ namespace MasterBuilderHeeler.Configuration
         public static ConfigEntry<Color> HudAxisYawColor { get; private set; } = null!;
         public static ConfigEntry<Color> HudAxisRollColor { get; private set; } = null!;
 
+        public static ConfigEntry<Color> HudUltraFineStepColor { get; private set; } = null!;
+        public static ConfigEntry<Color> HudExtraFineStepColor { get; private set; } = null!;
         public static ConfigEntry<Color> HudFineStepColor { get; private set; } = null!;
         public static ConfigEntry<Color> HudStandardStepColor { get; private set; } = null!;
         public static ConfigEntry<Color> HudCoarseStepColor { get; private set; } = null!;
@@ -127,17 +129,25 @@ namespace MasterBuilderHeeler.Configuration
                 (Color)new Color32(0x40, 0xC4, 0xFF, 0xFF),
                 "Text color for Roll rotation axis indicators on the Precision panel.");
 
+            HudUltraFineStepColor = BindHudColor(config, "HudUltraFineStepColor",
+                (Color)new Color32(0x44, 0x8A, 0xFF, 0xFF),
+                "Text color for the UltraFine step preset indicators on the Precision panel.");
+
+            HudExtraFineStepColor = BindHudColor(config, "HudExtraFineStepColor",
+                (Color)new Color32(0x40, 0xC4, 0xFF, 0xFF),
+                "Text color for the ExtraFine step preset indicators on the Precision panel.");
+
             HudFineStepColor = BindHudColor(config, "HudFineStepColor",
                 (Color)new Color32(0x80, 0xD8, 0xFF, 0xFF),
-                "Text color for the Fine Step indicator on the Precision panel.");
+                "Text color for the Fine step preset indicators on the Precision panel.");
 
             HudStandardStepColor = BindHudColor(config, "HudStandardStepColor",
                 Color.white,
-                "Text color for the Standard Step indicator on the Precision panel.");
+                "Text color for the Standard step preset indicators on the Precision panel.");
 
             HudCoarseStepColor = BindHudColor(config, "HudCoarseStepColor",
                 (Color)new Color32(0xFF, 0xAB, 0x40, 0xFF),
-                "Text color for the Coarse Step indicator on the Precision panel.");
+                "Text color for the Coarse step preset indicators on the Precision panel.");
 
             HudCustomStepColor = BindHudColor(config, "HudCustomStepColor",
                 (Color)new Color32(0xEA, 0x80, 0xFC, 0xFF),

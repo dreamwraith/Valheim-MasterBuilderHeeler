@@ -15,8 +15,7 @@ namespace MasterBuilderHeeler.Core.State
         public static RotationFrame ActiveRotationFrame { get; private set; } = RotationFrame.World;
         public static TranslationFrame ActiveTranslationFrame { get; private set; } = TranslationFrame.Local;
         public static RotationAxis ActiveAxis { get; private set; } = RotationAxis.Yaw;
-        public static bool IsFineStepLatched { get; private set; }
-        public static bool IsCoarseStepLatched { get; private set; }
+        public static StepPreset ActiveStepPreset { get; private set; } = StepPreset.Fine;
         public static bool IsPrecisionModeActive { get; private set; } = true;
         public static bool IsRoofModeActive { get; private set; }
         public static bool IsTerrainOpTarget { get; private set; }
@@ -45,24 +44,6 @@ namespace MasterBuilderHeeler.Core.State
         public static bool IsTerrainOpGhostActive =>
             !EditedPiece && IsTerrainOpTarget;
 
-        public static StepPreset ActiveStepPreset
-        {
-            get
-            {
-                if (IsFineStepLatched)
-                {
-                    return StepPreset.Fine;
-                }
-
-                if (IsCoarseStepLatched)
-                {
-                    return StepPreset.Coarse;
-                }
-
-                return StepPreset.Standard;
-            }
-        }
-
         public static void Initialize()
         {
             SetPrecisionModeActive(ModConfig.EnablePrecisionModeByDefault.Value);
@@ -76,19 +57,27 @@ namespace MasterBuilderHeeler.Core.State
             ModConfig.DefaultGridSize.SettingChanged -= OnDefaultGridSizeChanged;
         }
 
-        public static void ResetState()
+        public static void EndHammerSession()
         {
             IsHammerSessionActive = false;
             IsBuildCameraActive = false;
             EditState = PlacementEditState.Normal;
+
+            FrozenGhostPosition = Vector3.zero;
+            FrozenGhostOriginalPosition = Vector3.zero;
+            EditedPiece = null;
+            EditedPiecePosition = Vector3.zero;
+            EditedPieceOriginalPosition = Vector3.zero;
+            EditedPieceOriginalRotation = Quaternion.identity;
+        }
+
+        public static void ResetBuildSettings()
+        {
             ActiveRotationFrame = RotationFrame.World;
             ActiveTranslationFrame = TranslationFrame.Local;
             ResetLatches();
 
-            SetPrecisionModeActive(ModConfig.EnablePrecisionModeByDefault.Value);
             IsRoofModeActive = ModConfig.EnableRoofModeByDefault.Value;
-            IsTerrainOpTarget = false;
-            IsCornerRoofTarget = false;
             IsGridSnapActive = false;
             IsGridOverlayVisible = false;
             ActiveGridFrame = GridFrame.World;
@@ -97,13 +86,6 @@ namespace MasterBuilderHeeler.Core.State
             LocalGridRotation = Quaternion.identity;
             GridCellSize = ModConfig.DefaultGridSize.Value;
             StepMultiplier = 1.0f;
-
-            FrozenGhostPosition = Vector3.zero;
-            FrozenGhostOriginalPosition = Vector3.zero;
-            EditedPiece = null;
-            EditedPiecePosition = Vector3.zero;
-            EditedPieceOriginalPosition = Vector3.zero;
-            EditedPieceOriginalRotation = Quaternion.identity;
         }
 
         public static void SetHammerSessionActive(bool active) => IsHammerSessionActive = active;
@@ -196,29 +178,12 @@ namespace MasterBuilderHeeler.Core.State
             HudMessageUtils.ShowTopLeft(IsPrecisionModeActive ? "Precision Mode: ON" : "Precision Mode: OFF");
         }
 
-        public static void ToggleFineStep()
+        public static void ShiftStepPreset(int offset)
         {
-            IsFineStepLatched = !IsFineStepLatched;
-            if (IsFineStepLatched)
-            {
-                IsCoarseStepLatched = false;
-            }
+            ActiveStepPreset = (StepPreset)Mathf.Clamp((int)ActiveStepPreset + offset, (int)StepPreset.UltraFine, (int)StepPreset.Coarse);
             if (ModConfig.IsDebugLogging)
             {
-                Plugin.LogDebug($"[BuildStateManager] Fine Step toggled: {IsFineStepLatched}");
-            }
-        }
-
-        public static void ToggleCoarseStep()
-        {
-            IsCoarseStepLatched = !IsCoarseStepLatched;
-            if (IsCoarseStepLatched)
-            {
-                IsFineStepLatched = false;
-            }
-            if (ModConfig.IsDebugLogging)
-            {
-                Plugin.LogDebug($"[BuildStateManager] Coarse Step toggled: {IsCoarseStepLatched}");
+                Plugin.LogDebug($"[BuildStateManager] Step Preset shifted to: {ActiveStepPreset}");
             }
         }
 
@@ -253,9 +218,11 @@ namespace MasterBuilderHeeler.Core.State
         {
             float baseStep = ActiveStepPreset switch
             {
-                StepPreset.Fine => ModConfig.FineRotationStep.Value,
-                StepPreset.Coarse => ModConfig.CoarseRotationStep.Value,
-                _ => ModConfig.StandardRotationStep.Value
+                StepPreset.UltraFine => ModConfig.RotationStepUltraFine.Value,
+                StepPreset.ExtraFine => ModConfig.RotationStepExtraFine.Value,
+                StepPreset.Fine => ModConfig.RotationStepFine.Value,
+                StepPreset.Coarse => ModConfig.RotationStepCoarse.Value,
+                _ => ModConfig.RotationStepStandard.Value
             };
             return baseStep * StepMultiplier;
         }
@@ -264,9 +231,11 @@ namespace MasterBuilderHeeler.Core.State
         {
             float baseStep = ActiveStepPreset switch
             {
-                StepPreset.Fine => ModConfig.FineTranslationStep.Value,
-                StepPreset.Coarse => ModConfig.CoarseTranslationStep.Value,
-                _ => ModConfig.StandardTranslationStep.Value
+                StepPreset.UltraFine => ModConfig.TranslationStepUltraFine.Value,
+                StepPreset.ExtraFine => ModConfig.TranslationStepExtraFine.Value,
+                StepPreset.Fine => ModConfig.TranslationStepFine.Value,
+                StepPreset.Coarse => ModConfig.TranslationStepCoarse.Value,
+                _ => ModConfig.TranslationStepStandard.Value
             };
             return baseStep * StepMultiplier;
         }
@@ -301,8 +270,7 @@ namespace MasterBuilderHeeler.Core.State
         public static void ResetLatches()
         {
             ActiveAxis = RotationAxis.Yaw;
-            IsCoarseStepLatched = false;
-            IsFineStepLatched = false;
+            ActiveStepPreset = StepPreset.Fine;
         }
 
         public static void ToggleRoofMode()
@@ -412,7 +380,7 @@ namespace MasterBuilderHeeler.Core.State
         private static void OnDefaultGridSizeChanged(object sender, EventArgs eventArgs) =>
             GridCellSize = ModConfig.DefaultGridSize.Value;
 
-        private static void SetPrecisionModeActive(bool active)
+        public static void SetPrecisionModeActive(bool active)
         {
             bool resolvedActive = active && ModConfig.EnablePrecision.Value;
             if (IsPrecisionModeActive == resolvedActive)

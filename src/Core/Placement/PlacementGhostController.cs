@@ -38,18 +38,18 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static void ResetBuildSession()
         {
-            if (BuildStateManager.EditState == PlacementEditState.InPlaceEdit)
-            {
-                PieceEditController.CancelEdit();
-            }
-
-            _activePieceTableInstanceId = 0;
-            _lastSelectedPrefabInstanceId = 0;
-            BuildStateManager.ResetState();
-            BuildCameraController.Deactivate();
-            DetachPlacementMarker(Player.m_localPlayer);
+            EndHammerSession();
+            BuildStateManager.SetPrecisionModeActive(ModConfig.EnablePrecisionModeByDefault.Value);
+            BuildStateManager.ResetBuildSettings();
             PieceRotationEngine.ResetAllRotators();
-            PieceTranslationEngine.ResetOffset();
+        }
+
+        public static void ResetBuildSettings()
+        {
+            BuildStateManager.ResetBuildSettings();
+            PieceRotationEngine.ResetAllRotators();
+            PieceTranslationEngine.ResetNudge();
+            HudMessageUtils.ShowTopLeft("Build settings reset");
         }
 
         public static void OnLocalPlayerReady(Player player)
@@ -73,12 +73,13 @@ namespace MasterBuilderHeeler.Core.Placement
                 return;
             }
 
+            // death only ends the session here, the full reset comes when the game destroys the dead player for respawn
             if (player.IsDead() || player.IsTeleporting() || !player.InPlaceMode())
             {
                 if (BuildStateManager.IsHammerSessionActive)
                 {
-                    ResetBuildSession();
-                    Plugin.LogDebug("[PlacementGhostController] Hammer exited: build session state reset.");
+                    EndHammerSession();
+                    Plugin.LogDebug("[PlacementGhostController] Hammer exited: build session ended, build settings kept.");
                 }
                 return;
             }
@@ -351,6 +352,22 @@ namespace MasterBuilderHeeler.Core.Placement
 
             PieceTranslationEngine.AdjustPlacementGhost(player.m_placementGhost);
             PlacementValidator.ValidateGhost(player, flashGuardStone);
+        }
+
+        private static void EndHammerSession()
+        {
+            if (BuildStateManager.EditState == PlacementEditState.InPlaceEdit)
+            {
+                PieceEditController.CancelEdit();
+            }
+
+            _activePieceTableInstanceId = 0;
+            _lastSelectedPrefabInstanceId = 0;
+            BuildStateManager.EndHammerSession();
+            BuildCameraController.Deactivate();
+            DetachPlacementMarker(Player.m_localPlayer);
+            PieceRotationEngine.ClearTargetMetadata();
+            PieceTranslationEngine.ResetOffset();
         }
 
         private static void ApplyFrozenGhostTransform(GameObject ghost)

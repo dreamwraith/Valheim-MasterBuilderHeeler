@@ -14,6 +14,7 @@ namespace MasterBuilderHeeler.Core.Rotation
 
         private static int _currentTargetInstanceId;
         private static bool _dirtyFromNativeScroll;
+        private static Quaternion _savedRotation = Quaternion.identity;
 
         public static IRotator GetActiveRotator()
         {
@@ -138,17 +139,21 @@ namespace MasterBuilderHeeler.Core.Rotation
             LocalRotator.ResetRotation();
             RoofRotator.ResetRotation();
 
-            if (!BuildStateManager.IsHammerSessionActive)
-            {
-                ClearTargetMetadata();
-            }
-
             if (Player.m_localPlayer)
             {
                 Player.m_localPlayer.m_placeRotation = 0;
             }
 
             Plugin.LogDebug("[PieceRotationEngine] Reset all rotators to base orientation and reset native m_placeRotation to 0.");
+        }
+
+        // euler and local always hold the standard basis rotation, roof gets rebuilt from it on restore
+        public static void SaveRotation() => _savedRotation = EulerRotator.GetRotation();
+
+        public static void RestoreSavedRotation()
+        {
+            _dirtyFromNativeScroll = false;
+            SyncRotatorsFromBasis(_savedRotation, isRoofBasis: false);
         }
 
         public static void ResetAxis(RotationAxis axis)
@@ -228,7 +233,7 @@ namespace MasterBuilderHeeler.Core.Rotation
             RoofRotator.SyncFromRotation(Quaternion.Normalize(syncedRotation * BuildFrameBasis.CornerRoofBaseRotation));
         }
 
-        private static void ClearTargetMetadata()
+        public static void ClearTargetMetadata()
         {
             _currentTargetInstanceId = 0;
             BuildStateManager.SetTargetClassification(isTerrainOp: false, isCornerRoof: false);

@@ -8,14 +8,14 @@ namespace MasterBuilderHeeler.Configuration
     {
         private const string SectionName = "Keybindings (Keyboard & Mouse)";
 
-        private static readonly List<ConfigEntry<KeyboardShortcut>> Shortcuts = new List<ConfigEntry<KeyboardShortcut>>(34);
+        private static readonly List<ConfigEntry<KeyboardShortcut>> Shortcuts = new List<ConfigEntry<KeyboardShortcut>>(35);
 
         public static ConfigEntry<KeyboardShortcut> TogglePrecisionModeKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> ToggleBuildCameraKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> ToggleGhostFreezeKey { get; private set; } = null!;
 
-        public static ConfigEntry<KeyboardShortcut> ToggleFineStepKey { get; private set; } = null!;
-        public static ConfigEntry<KeyboardShortcut> ToggleCoarseStepKey { get; private set; } = null!;
+        public static ConfigEntry<KeyboardShortcut> DecreaseStepPresetKey { get; private set; } = null!;
+        public static ConfigEntry<KeyboardShortcut> IncreaseStepPresetKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> DoubleStepMultiplierKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> HalveStepMultiplierKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> ResetStepMultiplierKey { get; private set; } = null!;
@@ -36,6 +36,7 @@ namespace MasterBuilderHeeler.Configuration
         public static ConfigEntry<KeyboardShortcut> NudgeDownKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> CycleTranslationFrameKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> ResetNudgeKey { get; private set; } = null!;
+        public static ConfigEntry<KeyboardShortcut> ResetBuildSettingsKey { get; private set; } = null!;
 
         public static ConfigEntry<KeyboardShortcut> ToggleGridSnapKey { get; private set; } = null!;
         public static ConfigEntry<KeyboardShortcut> ToggleGridOverlayKey { get; private set; } = null!;
@@ -68,13 +69,13 @@ namespace MasterBuilderHeeler.Configuration
                 new KeyboardShortcut(KeyCode.F7),
                 "Pins or unpins the active placement ghost in place for inspection, rotation, and nudging.");
 
-            ToggleFineStepKey = BindShortcut(config, "ToggleFineStepKey", "Toggle Fine Step",
+            DecreaseStepPresetKey = BindShortcut(config, "DecreaseStepPresetKey", "Decrease Step Preset",
                 new KeyboardShortcut(KeyCode.Minus),
-                "Toggles the Fine Step preset for small rotation and nudge increments.");
+                "Selects the next smaller rotation and nudge step preset (down to UltraFine).");
 
-            ToggleCoarseStepKey = BindShortcut(config, "ToggleCoarseStepKey", "Toggle Coarse Step",
+            IncreaseStepPresetKey = BindShortcut(config, "IncreaseStepPresetKey", "Increase Step Preset",
                 new KeyboardShortcut(KeyCode.Equals),
-                "Toggles the Coarse Step preset for large rotation and nudge increments.");
+                "Selects the next larger rotation and nudge step preset (up to Coarse).");
 
             DoubleStepMultiplierKey = BindShortcut(config, "DoubleStepMultiplierKey", "Double Step Multiplier",
                 new KeyboardShortcut(KeyCode.RightBracket),
@@ -147,6 +148,10 @@ namespace MasterBuilderHeeler.Configuration
             ResetNudgeKey = BindShortcut(config, "ResetNudgeKey", "Reset Nudge",
                 new KeyboardShortcut(KeyCode.Home),
                 "Resets piece nudge offset to its starting position.");
+
+            ResetBuildSettingsKey = BindShortcut(config, "ResetBuildSettingsKey", "Reset Build Settings",
+                new KeyboardShortcut(KeyCode.F10),
+                "Resets piece rotation, nudge, axis, rotation and nudge frames, Roof Mode, step preset, step multiplier, and grid settings to their defaults.");
 
             ToggleGridSnapKey = BindShortcut(config, "ToggleGridSnapKey", "Toggle Grid Snap",
                 new KeyboardShortcut(KeyCode.Y),

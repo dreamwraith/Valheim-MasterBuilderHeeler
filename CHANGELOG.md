@@ -5,6 +5,21 @@ All notable changes to **MasterBuilderHeeler** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `ResetBuildSettingsKey`, F10 by default. Puts rotation, steps and grid back to defaults.
+
+### Changed
+
+- Putting the hammer away doesn't reset your rotation and build settings anymore. Did that on purpose originally but
+  people complained about it, so it's gone. Nudge offset clears when you put it away, dying or logging out resets everything.
+- Five step presets now, UltraFine to Coarse, `-` and `=` to go down and up. Fine is the default preset. Standard is 22.5
+  so it matches the game.
+- Step size settings and the step keys got renamed, if you changed or rebound them you'll need to redo it.
+- Finishing an in-place edit gives the ghost its old rotation back.
+
 ## [1.1.0] - 2026-11-01
 
 ### Fixed

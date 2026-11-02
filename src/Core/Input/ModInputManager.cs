@@ -11,8 +11,8 @@ namespace MasterBuilderHeeler.Core.Input
         public static ButtonConfig ToggleBuildCameraButton { get; private set; } = null!;
         public static ButtonConfig ToggleGhostFreezeButton { get; private set; } = null!;
 
-        public static ButtonConfig ToggleFineStepButton { get; private set; } = null!;
-        public static ButtonConfig ToggleCoarseStepButton { get; private set; } = null!;
+        public static ButtonConfig DecreaseStepPresetButton { get; private set; } = null!;
+        public static ButtonConfig IncreaseStepPresetButton { get; private set; } = null!;
         public static ButtonConfig DoubleStepMultiplierButton { get; private set; } = null!;
         public static ButtonConfig HalveStepMultiplierButton { get; private set; } = null!;
         public static ButtonConfig ResetStepMultiplierButton { get; private set; } = null!;
@@ -33,6 +33,7 @@ namespace MasterBuilderHeeler.Core.Input
         public static ButtonConfig NudgeDownButton { get; private set; } = null!;
         public static ButtonConfig CycleTranslationFrameButton { get; private set; } = null!;
         public static ButtonConfig ResetNudgeButton { get; private set; } = null!;
+        public static ButtonConfig ResetBuildSettingsButton { get; private set; } = null!;
 
         public static ButtonConfig ToggleGridSnapButton { get; private set; } = null!;
         public static ButtonConfig ToggleGridOverlayButton { get; private set; } = null!;
@@ -53,8 +54,8 @@ namespace MasterBuilderHeeler.Core.Input
             ToggleBuildCameraButton = RegisterButton("ToggleBuildCamera", KeyboardMouseConfig.ToggleBuildCameraKey);
             ToggleGhostFreezeButton = RegisterButton("ToggleGhostFreeze", KeyboardMouseConfig.ToggleGhostFreezeKey);
 
-            ToggleFineStepButton = RegisterButton("ToggleFineStep", KeyboardMouseConfig.ToggleFineStepKey);
-            ToggleCoarseStepButton = RegisterButton("ToggleCoarseStep", KeyboardMouseConfig.ToggleCoarseStepKey);
+            DecreaseStepPresetButton = RegisterButton("DecreaseStepPreset", KeyboardMouseConfig.DecreaseStepPresetKey);
+            IncreaseStepPresetButton = RegisterButton("IncreaseStepPreset", KeyboardMouseConfig.IncreaseStepPresetKey);
             DoubleStepMultiplierButton = RegisterButton("DoubleStepMultiplier", KeyboardMouseConfig.DoubleStepMultiplierKey);
             HalveStepMultiplierButton = RegisterButton("HalveStepMultiplier", KeyboardMouseConfig.HalveStepMultiplierKey);
             ResetStepMultiplierButton = RegisterButton("ResetStepMultiplier", KeyboardMouseConfig.ResetStepMultiplierKey);
@@ -75,6 +76,7 @@ namespace MasterBuilderHeeler.Core.Input
             NudgeDownButton = RegisterButton("NudgeDown", KeyboardMouseConfig.NudgeDownKey);
             CycleTranslationFrameButton = RegisterButton("CycleTranslationFrame", KeyboardMouseConfig.CycleTranslationFrameKey);
             ResetNudgeButton = RegisterButton("ResetNudge", KeyboardMouseConfig.ResetNudgeKey);
+            ResetBuildSettingsButton = RegisterButton("ResetBuildSettings", KeyboardMouseConfig.ResetBuildSettingsKey);
 
             ToggleGridSnapButton = RegisterButton("ToggleGridSnap", KeyboardMouseConfig.ToggleGridSnapKey);
             ToggleGridOverlayButton = RegisterButton("ToggleGridOverlay", KeyboardMouseConfig.ToggleGridOverlayKey);

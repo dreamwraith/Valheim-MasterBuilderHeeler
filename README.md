@@ -35,13 +35,13 @@ MasterBuilderHeeler draws inspiration from the following Valheim mods and commun
 
 ## Features
 
-Nudge, ghost freeze, in-place edit, and sampling need Precision Mode on. Grid keys work without it. Precision, grid, frame, and step settings reset to their configured defaults when you leave build mode. Set your preferred starting values under the `Default` settings.
+Nudge, ghost freeze, in-place edit, and sampling need Precision Mode on. Grid keys work without it. Piece rotation, Precision and Roof Mode, frames, step, and grid settings stay how you left them when you put the hammer away or teleport, and only the nudge offset clears. Logging in or dying puts everything back to the configured defaults, and `ResetBuildSettingsKey` (F10) does the same for everything but Precision Mode. Set your preferred starting values under the `Default` settings.
 
 - **3-axis rotation:** Rotate pieces across yaw, pitch, and roll in World or Local frames with a 3D ring gizmo, plus Corner Roof alignment for 45-degree roof slopes. Terrain tool pieces keep native rotation.
-- **Step presets and scaling:** Switch between Fine, Standard, and Coarse rotation and nudge steps, and scale step sizes up or down on the fly.
+- **Step presets and scaling:** Move through UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge steps, and scale step sizes up or down on the fly. Fine is the starting preset, and Standard matches the game's 22.5-degree rotation step.
 - **Ghost freeze and piece nudging:** Pin the placement ghost in place to inspect alignment from any angle, and nudge pieces along Local or World axes.
 - **Grid snapping and overlay:** Snap piece pivots or manual snap points to a configurable World or piece-anchored Local grid, with an optional terrain-following or flat grid overlay.
-- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, and health. Support is recalculated at the new position, and unsupported pieces break. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu, and containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends.
+- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, and health. Support is recalculated at the new position, and unsupported pieces break. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu, and containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends, and the placement ghost gets its rotation back afterward.
 - **Placement rules:** Snapped, nudged, frozen, and edited pieces skip the base game rules for wood surfaces, floors, ceilings, non-supporting pieces, and required connections. Other base game placement rules still apply, and unsupported pieces still break. Build Camera range can technically exceed active loaded zones, so a placement check prevents placing outside the active zone.
 - **Piece and rotation sampling:** Select the aimed piece directly in the active build menu or copy a placed piece's 3D rotation onto the active ghost. `PrecisionCopyBehavior` sets how the sample keys work with native Copy Piece.
 - **Build reach:** `EnableExtendedAvatarReach` extends player placement, repair, dismantle, and in-place edit reach to `MaxBuildReachDistance`. `ValidateStationRangeAtPieceLocation` checks crafting station range at the target piece instead of the player. Both are off by default. `MaxBuildReachDistance` limits extended player reach and in-place edit, sampling, and hover targeting. Build Camera reach is the game's 50m raycast, otherwise limited by `BuildCameraTetherRadius` and workbench range at the piece. The Build Camera always checks station range at the target piece.
@@ -60,15 +60,15 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 
 | Section | Sync Policy | Description |
 | :--- | :--- | :--- |
-| `General` | Conditional (Server) / Client | Master enable toggle, configuration lock, feature toggles, extended build reach, station range rules, hovered piece build tool requirement, gizmo style and scale, and log level. |
-| `Precision Settings` | Conditional (Client) | Default Precision and Roof Mode states, copy behavior, plus Fine, Standard, and Coarse rotation and nudge step sizes. |
+| `General` | Conditional (Server) / Client | Master enable toggle, feature toggles, extended build reach, station range rules, hovered piece build tool requirement, gizmo style and scale, and log level. |
+| `Precision Settings` | Conditional (Client) | Default Precision and Roof Mode states, copy behavior, plus UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge step sizes. |
 | `Grid Settings` | Conditional (Client) / Client | Default grid cell size, optional vertical snap, and grid overlay radius, height offsets, and colors. |
 | `Build Camera` | Conditional (Server) / Conditional (Client) / Client | Tether radius, `MaxBuildReachDistance`, movement speeds, mouse sensitivity, and camera smoothing. |
 | `Build Camera Light` | Conditional (Client) | Spotlight toggle, brightness, range, cone angle, and light color. |
 | `Build Camera Demister & AutoPickup` | Conditional (Server) | Mistlands mist clearing, Wisplight requirement, auto-pickup toggle and radius, Comfort requirement, and ward check. |
 | `HUD & Info Panels` | Client | Background toggle, inspection poll interval, and native piece health bar toggle. |
 | `Global / Precision / Hover / Placement Panel` | Client | Per-panel visibility, screen offsets, font sizes, background color and opacity, and individual inspection fields. |
-| `Keybindings (Keyboard & Mouse)` | Client | Shortcuts and modifier combinations for all build, rotation, nudge, grid, camera, sampling, and edit actions. |
+| `Keybindings (Keyboard & Mouse)` | Client | Shortcuts and modifier combinations for all build, rotation, nudge, grid, camera, sampling, edit, and reset actions. |
 | `Gizmo Colors` / `HUD Colors` | Client | Color and opacity settings for 3D gizmo rings and arrows, HUD text roles, status indicators, and health/stability gradients. |
 
 **Sync policies:** `Client` settings are never synced and stay under each player's control. `Conditional (Server)` settings are server-controlled by default, and administrators can defer them to clients. `Conditional (Client)` settings are client-controlled by default, and administrators can enforce them. A section with more than one policy contains settings of each listed type. Only server administrators can edit server-controlled settings.
@@ -88,7 +88,7 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 | `ValidateStationRangeAtPieceLocation` | `false` | Checks crafting station range at the target piece. |
 | `RequireHammerForHoverInspection` | `true` | Requires any build tool for the Hover panel. |
 | `GizmoScale` | `1.0` | Rotation gizmo size (0.25 - 4.0). |
-| `EnablePrecisionModeByDefault` | `true` | Turns on Precision Mode when you equip a build tool. |
+| `EnablePrecisionModeByDefault` | `true` | Turns on Precision Mode at login and after respawn. |
 | `PrecisionCopyBehavior` | `SideBySide` | Sets how Copy Piece and the sample keys work together. |
 | `DefaultGridSize` | `1.0` | Starting grid cell size in meters. |
 | `BuildCameraTetherRadius` | `50.0` | Maximum camera distance from the player (10 - 200). |
@@ -115,6 +115,7 @@ Step sizes, grid overlay, camera feel, spotlight, panel layout, and colors are s
 Tested with MasterBuilderHeeler:
 
 - [**Extra Snap Points Made Easy**](https://thunderstore.io/c/valheim/p/Searica/Extra_Snap_Points_Made_Easy/) by [Searica](https://thunderstore.io/c/valheim/p/Searica)
+  - Known issue: with its Manual, Manual+, or Grid snap mode on, a frozen ghost keeps snapping to whatever you're aiming at. Press the same key again to go back to Auto. Manual+ is on CapsLock by default, so it's easy to hit by accident. Working with Searica on a fix.
 - [**Advanced Terrain Modifiers**](https://thunderstore.io/c/valheim/p/Searica/AdvancedTerrainModifiers/) by [Searica](https://thunderstore.io/c/valheim/p/Searica)
 
 ### Incompatible Mods

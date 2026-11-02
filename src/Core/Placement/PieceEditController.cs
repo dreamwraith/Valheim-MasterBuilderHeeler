@@ -113,6 +113,7 @@ namespace MasterBuilderHeeler.Core.Placement
             BuildStateManager.EnterPieceEdit(targetPiece);
             PieceRotationEngine.RefreshTargetMetadata(targetPiece.gameObject);
             PieceTranslationEngine.ResetOffset();
+            PieceRotationEngine.SaveRotation();
             PieceRotationEngine.MatchPieceRotation(targetPiece);
 
             string displayName = PieceUtils.GetDisplayName(targetPiece);
@@ -314,7 +315,7 @@ namespace MasterBuilderHeeler.Core.Placement
         private static void ResetEditTransform()
         {
             _editedPieceHasContainers = false;
-            PieceRotationEngine.ResetAllRotators();
+            PieceRotationEngine.RestoreSavedRotation();
             PieceTranslationEngine.ResetOffset();
 
             Player localPlayer = Player.m_localPlayer;
