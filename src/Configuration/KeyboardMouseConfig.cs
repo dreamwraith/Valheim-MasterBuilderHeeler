@@ -170,7 +170,7 @@ namespace MasterBuilderHeeler.Configuration
 
             SamplePieceKey = BindShortcut(config, "SamplePieceKey", "Sample Piece",
                 new KeyboardShortcut(KeyCode.Z),
-                "Selects the piece you are aiming at in the Hammer build menu.");
+                "Selects the piece you are aiming at in the active build menu.");
 
             MatchPieceRotationKey = BindShortcut(config, "MatchPieceRotationKey", "Match Piece Rotation",
                 new KeyboardShortcut(KeyCode.N),
@@ -178,7 +178,7 @@ namespace MasterBuilderHeeler.Configuration
 
             SamplePieceAndRotationKey = BindShortcut(config, "SamplePieceAndRotationKey", "Sample Piece and Rotation",
                 new KeyboardShortcut(KeyCode.Semicolon),
-                "Selects the piece you are aiming at in the Hammer build menu and copies its rotation.");
+                "Selects the piece you are aiming at in the active build menu and copies its rotation.");
 
             TogglePieceEditKey = BindShortcut(config, "TogglePieceEditKey", "Toggle In-Place Edit",
                 new KeyboardShortcut(KeyCode.F8),

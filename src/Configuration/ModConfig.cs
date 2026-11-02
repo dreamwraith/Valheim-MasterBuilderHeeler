@@ -226,7 +226,7 @@ namespace MasterBuilderHeeler.Configuration
                 new AcceptableValueRange<float>(10.0f, 200.0f));
 
             MaxBuildReachDistance = BindSynced(config, "Build Camera", "MaxBuildReachDistance", 50.0f,
-                "Maximum targeting and build reach in meters for the Build Camera, extended player reach, piece sampling, and hovered piece info.",
+                "Maximum reach in meters for extended player reach, in-place edit targeting, piece sampling, and hovered piece info. Build Camera reach is the base game 50m raycast.",
                 new AcceptableValueRange<float>(10.0f, 50.0f));
 
             EnableCameraLight = BindConditionalClient(config, "Build Camera Light", "EnableCameraLight", true,
@@ -278,7 +278,7 @@ namespace MasterBuilderHeeler.Configuration
                 new AcceptableValueRange<float>(0.05f, 1.0f));
 
             HideNativeCrosshairHealthBar = BindClient(config, "HUD & Info Panels", "HideNativeCrosshairHealthBar", false,
-                "Hides the native crosshair piece health bar while HUD panels are enabled.");
+                "Hides the native crosshair piece health bar while the Hover panel shows piece health.");
 
             GlobalPanelLayout = BindPanelLayout(
                 config,
