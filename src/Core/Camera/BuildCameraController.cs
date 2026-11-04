@@ -77,6 +77,9 @@ namespace MasterBuilderHeeler.Core.Camera
             }
 
             camera.transform.position = startPosition;
+            // UpdateCamera is skipped while flying, drop the near plane or the camera clips into whatever it runs into.
+            // this is a bit of a hack, but it works and is reverted when the camera is deactivated.
+            camera.m_camera.nearClipPlane = camera.m_nearClipPlaneMin;
             BuildCameraPhysics.Initialize(startPosition, camera.transform.rotation);
             _isInitialized = true;
             _wasBoundaryClamped = false;

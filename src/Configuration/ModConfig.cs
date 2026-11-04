@@ -52,6 +52,7 @@ namespace MasterBuilderHeeler.Configuration
         public static ConfigEntry<float> BuildCameraLookSensitivity { get; private set; } = null!;
         public static ConfigEntry<float> BuildCameraLookSmoothTime { get; private set; } = null!;
         public static ConfigEntry<float> BuildCameraTetherRadius { get; private set; } = null!;
+        public static ConfigEntry<bool> BuildCameraIgnoreCollision { get; private set; } = null!;
         public static ConfigEntry<float> MaxBuildReachDistance { get; private set; } = null!;
 
         public static ConfigEntry<bool> EnableCameraLight { get; private set; } = null!;
@@ -240,6 +241,9 @@ namespace MasterBuilderHeeler.Configuration
             BuildCameraTetherRadius = BindSynced(config, "Build Camera", "BuildCameraTetherRadius", 50.0f,
                 "Maximum distance in meters the Build Camera can move from the player.",
                 new AcceptableValueRange<float>(10.0f, 200.0f));
+
+            BuildCameraIgnoreCollision = BindSynced(config, "Build Camera", "BuildCameraIgnoreCollision", false,
+                "Lets the Build Camera pass through build pieces and trees. Terrain and rocks still block the camera.");
 
             MaxBuildReachDistance = BindSynced(config, "Build Camera", "MaxBuildReachDistance", 50.0f,
                 "Maximum reach in meters for extended player reach, in-place edit targeting, piece sampling, and hovered piece info. Build Camera reach is the base game 50m raycast.",

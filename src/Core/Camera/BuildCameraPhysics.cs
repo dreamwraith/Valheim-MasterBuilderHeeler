@@ -9,7 +9,8 @@ namespace MasterBuilderHeeler.Core.Camera
         private const float SkinWidth = 0.04f;
         private const float MovementEpsilon = 0.0001f;
 
-        private static readonly int CollisionMask = LayerMask.GetMask("terrain", "piece", "static_solid", "Default");
+        private static readonly int FullCollisionMask = LayerMask.GetMask("terrain", "piece", "static_solid", "Default");
+        private static readonly int WorldOnlyCollisionMask = LayerMask.GetMask("terrain", "static_solid");
 
         private static Vector3 _currentVelocity;
         private static Vector3 _velocityAcceleration;
@@ -86,6 +87,10 @@ namespace MasterBuilderHeeler.Core.Camera
                 return fromPosition;
             }
 
+            int collisionMask = ModConfig.BuildCameraIgnoreCollision.Value
+                ? WorldOnlyCollisionMask
+                : FullCollisionMask;
+
             Vector3 direction = movement / distance;
             if (Physics.SphereCast(
                 fromPosition,
@@ -93,7 +98,7 @@ namespace MasterBuilderHeeler.Core.Camera
                 direction,
                 out RaycastHit sphereCastHit,
                 distance,
-                CollisionMask,
+                collisionMask,
                 QueryTriggerInteraction.Ignore))
             {
                 float allowedDistance = Mathf.Max(0f, sphereCastHit.distance - SkinWidth);
@@ -103,9 +108,9 @@ namespace MasterBuilderHeeler.Core.Camera
                 toPosition = deflectedPoint + slideMove;
             }
 
-            if (Physics.CheckSphere(toPosition, ClearanceRadius, CollisionMask, QueryTriggerInteraction.Ignore))
+            if (Physics.CheckSphere(toPosition, ClearanceRadius, collisionMask, QueryTriggerInteraction.Ignore))
             {
-                if (!Physics.CheckSphere(_lastSafePosition, ClearanceRadius, CollisionMask, QueryTriggerInteraction.Ignore))
+                if (!Physics.CheckSphere(_lastSafePosition, ClearanceRadius, collisionMask, QueryTriggerInteraction.Ignore))
                 {
                     return _lastSafePosition;
                 }
