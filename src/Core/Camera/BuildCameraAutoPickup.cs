@@ -18,8 +18,8 @@ namespace MasterBuilderHeeler.Core.Camera
 
         public static void ScanAndCollect(Player player, Vector3 cameraPosition)
         {
-            if (!ModConfig.EnableMod.Value ||
-                !ModConfig.EnableAutoPickup.Value ||
+            if (!ModConfig.General.EnableMod.Value ||
+                !ModConfig.Build.EnableAutoPickup.Value ||
                 !Player.m_enableAutoPickup ||
                 player.IsDead())
             {
@@ -32,13 +32,13 @@ namespace MasterBuilderHeeler.Core.Camera
             }
             _nextScanTime = Time.time + ScanInterval;
 
-            if (ModConfig.RequireComfortForAutoPickup.Value &&
+            if (ModConfig.Build.RequireComfortForAutoPickup.Value &&
                 !player.GetSEMan().HaveStatusEffect(SEMan.s_statusEffectResting))
             {
                 return;
             }
 
-            float radius = ModConfig.AutoPickupRadius.Value;
+            float radius = ModConfig.Build.AutoPickupRadius.Value;
             int count = Physics.OverlapSphereNonAlloc(cameraPosition, radius, NearbyColliders, ItemLayerMask);
 
             for (int index = 0; index < count; index++)
@@ -53,12 +53,12 @@ namespace MasterBuilderHeeler.Core.Camera
                     continue;
                 }
 
-                if (ModConfig.EnforcePrivateAreaCheck.Value && !PrivateArea.CheckAccess(itemDrop.transform.position, 0f, false))
+                if (ModConfig.Build.EnforcePrivateAreaCheck.Value && !PrivateArea.CheckAccess(itemDrop.transform.position, 0f, false))
                 {
                     continue;
                 }
 
-                // load zdo stack data before the weight checks, and sort out ownership before Pickup destroys the drop
+                // load zdo stack data for the weight checks first, then sort out ownership before Pickup destroys the drop
                 itemDrop.Load();
 
                 if (!player.m_inventory.CanAddItem(itemDrop.m_itemData, itemDrop.m_itemData.m_stack))

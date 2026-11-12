@@ -21,7 +21,7 @@ namespace MasterBuilderHeeler.Core.Placement
                 return null;
             }
 
-            float maxRayDistance = ModConfig.MaxBuildReachDistance.Value;
+            float maxRayDistance = ModConfig.Build.MaxBuildReachDistance.Value;
             if (!Physics.Raycast(activeCamera.transform.position, activeCamera.transform.forward, out RaycastHit raycastHit, maxRayDistance, player.m_removeRayMask))
             {
                 return null;
@@ -29,7 +29,7 @@ namespace MasterBuilderHeeler.Core.Placement
 
             bool capToAvatarReach = enforceBuildReach &&
                 !BuildStateManager.IsBuildCameraActive &&
-                !ModConfig.EnableExtendedAvatarReach.Value;
+                !ModConfig.General.EnableExtendedAvatarReach.Value;
             if (capToAvatarReach && Vector3.Distance(player.m_eye.position, raycastHit.point) > player.m_maxPlaceDistance)
             {
                 return null;
@@ -38,10 +38,10 @@ namespace MasterBuilderHeeler.Core.Placement
             return raycastHit.collider.GetComponentInParent<Piece>();
         }
 
-        public static void ApplyReachExpansion(Player player, out float originalDistance)
+        public static float ApplyReachExpansion(Player player)
         {
-            originalDistance = player.m_maxPlaceDistance;
-            if (ModConfig.EnableMod.Value)
+            float originalDistance = player.m_maxPlaceDistance;
+            if (ModConfig.General.EnableMod.Value)
             {
                 if (BuildStateManager.IsBuildCameraActive)
                 {
@@ -49,11 +49,13 @@ namespace MasterBuilderHeeler.Core.Placement
                     // basically this allows you to raycast further away for placement and interacts.
                     player.m_maxPlaceDistance = 1000f;
                 }
-                else if (ModConfig.EnableExtendedAvatarReach.Value)
+                else if (ModConfig.General.EnableExtendedAvatarReach.Value)
                 {
-                    player.m_maxPlaceDistance = Mathf.Max(originalDistance, ModConfig.MaxBuildReachDistance.Value);
+                    player.m_maxPlaceDistance = Mathf.Max(originalDistance, ModConfig.Build.MaxBuildReachDistance.Value);
                 }
             }
+
+            return originalDistance;
         }
 
         public static void RestoreReach(Player player, float originalDistance) =>

@@ -8,16 +8,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
 {
     public sealed class GridOverlayRenderer : MonoBehaviour
     {
-        private const float TerrainRefreshInterval = 0.5f;
-
         private static GridOverlayRenderer? _instance;
 
-        private readonly GridMeshBuilder _meshBuilder = new GridMeshBuilder();
-
+        private GridMeshBuilder _meshBuilder = GridMeshBuilder.Create(GridStyle.Wireframe);
         private Mesh? _gridMesh;
         private Material? _material;
         private GridMeshBuilder.GridBuildSpec _builtSpec;
-        private float _nextTerrainRefreshTime;
         private bool _hasValidMesh;
 
         private void Awake()
@@ -27,7 +23,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
 
         private void LateUpdate()
         {
-            if (!ModConfig.EnableMod.Value || !BuildStateManager.IsGridOverlayVisible)
+            if (!ModConfig.General.EnableMod.Value || !BuildStateManager.IsGridOverlayVisible)
             {
                 _hasValidMesh = false;
                 return;
@@ -50,11 +46,17 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             GridFrame activeFrame = BuildStateManager.ActiveGridFrame;
             GridSurface activeSurface = BuildStateManager.ActiveGridSurface;
             float step = BuildStateManager.GridCellSize;
-            float radius = Mathf.Clamp(ModConfig.GridOverlayRadius.Value, 4.0f, 64.0f);
+            float radius = Mathf.Clamp(ModConfig.Build.GridOverlayRadius.Value, 4.0f, 64.0f);
             float heightOffset = ResolveHeightOffset(activeFrame, activeSurface);
-            Color baseColor = activeFrame == GridFrame.Local
-                ? ModConfig.LocalGridColor.Value
-                : ModConfig.WorldGridColor.Value;
+            // the game renders in linear and vertex colors reach the shader as is, so a picked srgb color shows
+            // lighter without this
+            Color baseColor = (activeFrame == GridFrame.Local
+                ? ModConfig.Build.LocalGridColor.Value
+                : ModConfig.Build.WorldGridColor.Value).linear;
+            GridMeshBuilder.GridLineWidths lineWidths = new GridMeshBuilder.GridLineWidths(
+                ModConfig.Build.RibbonGridMinorWidth.Value,
+                ModConfig.Build.RibbonGridMajorWidth.Value,
+                ModConfig.Build.RibbonGridOriginWidth.Value);
 
             Vector3 origin = activeFrame == GridFrame.Local
                 ? BuildStateManager.LocalGridOrigin
@@ -71,10 +73,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             GridMeshBuilder.GridBuildSpec buildSpec = new GridMeshBuilder.GridBuildSpec(
                 activeFrame,
                 activeSurface,
+                ModConfig.Build.GridOverlayStyle.Value,
                 step,
                 radius,
                 heightOffset,
                 baseColor,
+                lineWidths,
                 origin,
                 rotation,
                 focusCellX,
@@ -128,6 +132,22 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             }
         }
 
+        // zone loads, height edits and terrain data from other players all end in a collision mesh rebuild, so a
+        // terrain grid picks up new ground without polling. distant lod tiles arent sampled so they change nothing here
+        public static void MarkTerrainDirty(Heightmap heightmap)
+        {
+            if (!_instance || !_instance._hasValidMesh || !_instance._builtSpec.FollowTerrain || heightmap.IsDistantLod)
+            {
+                return;
+            }
+
+            GridMeshBuilder.GridBuildSpec builtSpec = _instance._builtSpec;
+            if (GridTerrainSampler.IsWithinReach(heightmap.transform.position, builtSpec.FocusWorldPosition, builtSpec.Radius))
+            {
+                _instance._hasValidMesh = false;
+            }
+        }
+
         private static Vector3 ResolveFocusPosition(Player player)
         {
             if (BuildStateManager.IsBuildCameraActive)
@@ -146,12 +166,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
         {
             if (surface == GridSurface.Terrain)
             {
-                return ModConfig.TerrainGridHeight.Value;
+                return ModConfig.Build.TerrainGridHeight.Value;
             }
 
             return frame == GridFrame.Local
-                ? ModConfig.LocalFlatGridHeight.Value
-                : ModConfig.WorldFlatGridHeight.Value;
+                ? ModConfig.Build.LocalFlatGridHeight.Value
+                : ModConfig.Build.WorldFlatGridHeight.Value;
         }
 
         private bool NeedsRebuild(in GridMeshBuilder.GridBuildSpec buildSpec)
@@ -160,6 +180,8 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
                 !_gridMesh ||
                 buildSpec.Frame != _builtSpec.Frame ||
                 buildSpec.Surface != _builtSpec.Surface ||
+                buildSpec.Style != _builtSpec.Style ||
+                buildSpec.LineWidths != _builtSpec.LineWidths ||
                 !Mathf.Approximately(buildSpec.Step, _builtSpec.Step) ||
                 !Mathf.Approximately(buildSpec.Radius, _builtSpec.Radius) ||
                 !Mathf.Approximately(buildSpec.HeightOffset, _builtSpec.HeightOffset) ||
@@ -170,21 +192,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
                 return true;
             }
 
-            if (!buildSpec.FollowTerrain)
-            {
-                return false;
-            }
-
             // world grids follow player y every frame but heightmap y overwrites it anyway, so only local terrain grids
-            // check Origin. terrain tools edit heightmaps in place so those just poll on a timer to prevent per frame zoooms that eat perf
-            if (buildSpec.Frame == GridFrame.Local &&
+            // check Origin. terrain edits dont show up in the spec so MarkTerrainDirty catches those
+            return buildSpec.FollowTerrain &&
+                buildSpec.Frame == GridFrame.Local &&
                 ((buildSpec.Origin - _builtSpec.Origin).sqrMagnitude > 0.0001f ||
-                 Quaternion.Angle(buildSpec.Rotation, _builtSpec.Rotation) > 0.01f))
-            {
-                return true;
-            }
-
-            return BuildStateManager.IsTerrainOpGhostActive && Time.time >= _nextTerrainRefreshTime;
+                 Quaternion.Angle(buildSpec.Rotation, _builtSpec.Rotation) > 0.01f);
         }
 
         private void RebuildMesh(in GridMeshBuilder.GridBuildSpec buildSpec)
@@ -200,13 +213,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
                 _gridMesh.MarkDynamic();
             }
 
-            _meshBuilder.RebuildPlaneMesh(_gridMesh, in buildSpec);
-
-            if (buildSpec.FollowTerrain)
+            if (_meshBuilder.Style != buildSpec.Style)
             {
-                _nextTerrainRefreshTime = Time.time + TerrainRefreshInterval;
+                _meshBuilder = GridMeshBuilder.Create(buildSpec.Style);
             }
 
+            _meshBuilder.RebuildPlaneMesh(_gridMesh, in buildSpec);
             _builtSpec = buildSpec;
             _hasValidMesh = true;
         }

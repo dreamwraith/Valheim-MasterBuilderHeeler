@@ -10,6 +10,7 @@ using MasterBuilderHeeler.Core.Input;
 using MasterBuilderHeeler.Core.Placement;
 using MasterBuilderHeeler.Core.State;
 using MasterBuilderHeeler.Core.UI;
+using MasterBuilderHeeler.Core.UI.Radial;
 using MasterBuilderHeeler.Core.Visuals.Gizmo;
 using MasterBuilderHeeler.Core.Visuals.Grid;
 
@@ -26,7 +27,9 @@ namespace MasterBuilderHeeler
         public const string ModGUID = "dreamwraith.MasterBuilderHeeler";
         public const string ModName = "MasterBuilderHeeler";
         public const string ModVersion = VersionInfo.Version;
-        public const string MinimumCompatibleVersion = "0.0.1";
+        // config sync matches a setting by section and name. 2.0 renamed a synced section so an older side
+        // doesnt line up there and gets turned away
+        public const string MinimumCompatibleVersion = "2.0.0";
 
         private Harmony? _harmony;
 
@@ -44,10 +47,11 @@ namespace MasterBuilderHeeler
                 return;
             }
 
-            ModInputManager.Initialize();
+            BuildActions.RegisterButtons();
             HudTheme.Initialize();
             HudKeybindFormatter.Initialize();
-            BuildInputRouter.Initialize();
+            GamepadChordLayer.Initialize();
+            BuildRadialMenu.Initialize();
             BuildStateManager.Initialize();
             PlacementGhostController.Initialize();
             BuildCameraRig.Initialize();
@@ -74,6 +78,7 @@ namespace MasterBuilderHeeler
             PlacementGhostController.Cleanup();
             HudManager.Cleanup();
             HudKeybindFormatter.Cleanup();
+            GamepadChordLayer.Cleanup();
             HudTheme.Cleanup();
             GizmoRendering.Cleanup();
             GridOverlayRenderer.Cleanup();

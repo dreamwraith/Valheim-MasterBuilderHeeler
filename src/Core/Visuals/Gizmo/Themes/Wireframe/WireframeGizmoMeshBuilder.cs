@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static MasterBuilderHeeler.Core.Visuals.Gizmo.GizmoRingMath;
 
 namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
 {
@@ -24,7 +25,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
                 hideFlags = HideFlags.HideAndDontSave
             };
 
-            ResolveRingBasis(normalAxis, out Vector3 axisU, out Vector3 axisV);
+            (Vector3 axisU, Vector3 axisV) = ResolveRingBasis(normalAxis);
 
             // leave a gap at 45 degrees so the ring line and tick dont run through the hollow knob
             // this prevents the penetration. giggity.
@@ -141,29 +142,6 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
             mesh.RecalculateBounds();
             return mesh;
         }
-
-        private static void ResolveRingBasis(Vector3 normalAxis, out Vector3 axisU, out Vector3 axisV)
-        {
-            if (normalAxis == Vector3.right)
-            {
-                axisU = Vector3.up;
-                axisV = Vector3.forward;
-                return;
-            }
-
-            if (normalAxis == Vector3.up)
-            {
-                axisU = Vector3.right;
-                axisV = Vector3.forward;
-                return;
-            }
-
-            axisU = Vector3.right;
-            axisV = Vector3.up;
-        }
-
-        private static Vector3 PointOnRing(Vector3 axisU, Vector3 axisV, float angleRadians, float ringRadius) =>
-            (axisU * (Mathf.Cos(angleRadians) * ringRadius)) + (axisV * (Mathf.Sin(angleRadians) * ringRadius));
 
         private static void AppendLine(List<int> indices, int startIndex, int endIndex)
         {

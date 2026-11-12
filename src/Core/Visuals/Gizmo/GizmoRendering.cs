@@ -1,6 +1,7 @@
 using System;
 using MasterBuilderHeeler.Configuration;
 using MasterBuilderHeeler.Core.State;
+using MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Solid;
 using MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe;
 
 namespace MasterBuilderHeeler.Core.Visuals.Gizmo
@@ -12,22 +13,22 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
         public static void Initialize()
         {
             Cleanup();
-            ModConfig.GizmoRendererStyle.SettingChanged += OnRendererSettingChanged;
-            ModConfig.EnablePrecision.SettingChanged += OnRendererSettingChanged;
+            ModConfig.Build.GizmoRendererStyle.SettingChanged += OnRendererSettingChanged;
+            ModConfig.General.EnablePrecision.SettingChanged += OnRendererSettingChanged;
             BuildStateManager.PrecisionModeChanged += OnPrecisionModeChanged;
         }
 
         public static void Cleanup()
         {
-            ModConfig.GizmoRendererStyle.SettingChanged -= OnRendererSettingChanged;
-            ModConfig.EnablePrecision.SettingChanged -= OnRendererSettingChanged;
+            ModConfig.Build.GizmoRendererStyle.SettingChanged -= OnRendererSettingChanged;
+            ModConfig.General.EnablePrecision.SettingChanged -= OnRendererSettingChanged;
             BuildStateManager.PrecisionModeChanged -= OnPrecisionModeChanged;
             DestroyController();
         }
 
         public static void EnsureController(Player player)
         {
-            if (ModConfig.GizmoRendererStyle.Value == GizmoStyle.Disabled || !ModConfig.EnablePrecision.Value)
+            if (ModConfig.Build.GizmoRendererStyle.Value == GizmoStyle.Disabled || !ModConfig.General.EnablePrecision.Value)
             {
                 return;
             }
@@ -43,6 +44,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
         public static IGizmoRenderer? CreateTheme(GizmoStyle style) => style switch
         {
             GizmoStyle.ProceduralWireframe => new WireframeGizmoRenderer(),
+            GizmoStyle.Solid => new SolidGizmoRenderer(),
             _ => null
         };
 
@@ -68,8 +70,8 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
 
         private static void OnRendererSettingChanged(object sender, EventArgs eventArgs)
         {
-            GizmoStyle style = ModConfig.GizmoRendererStyle.Value;
-            if (style == GizmoStyle.Disabled || !ModConfig.EnablePrecision.Value)
+            GizmoStyle style = ModConfig.Build.GizmoRendererStyle.Value;
+            if (style == GizmoStyle.Disabled || !ModConfig.General.EnablePrecision.Value)
             {
                 DestroyController();
                 return;

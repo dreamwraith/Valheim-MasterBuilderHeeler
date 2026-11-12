@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using MasterBuilderHeeler.Configuration;
 using MasterBuilderHeeler.Core.Placement;
+using MasterBuilderHeeler.Core.Rotation;
 using MasterBuilderHeeler.Core.State;
 using UnityEngine;
 
@@ -26,7 +27,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
         private void Awake()
         {
             GizmoRendering.RegisterController(this);
-            SetStyle(ModConfig.GizmoRendererStyle.Value);
+            SetStyle(ModConfig.Build.GizmoRendererStyle.Value);
             enabled = BuildStateManager.IsPrecisionModeActive;
         }
 
@@ -37,7 +38,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
             Player localPlayer = Player.m_localPlayer;
             GameObject? targetObject = BuildStateManager.GetActiveTargetObject(localPlayer);
             if (_activeTheme == null ||
-                !ModConfig.EnableMod.Value ||
+                !ModConfig.General.EnableMod.Value ||
                 !BuildStateManager.IsPrecisionModeActive ||
                 !targetObject ||
                 !targetObject.activeInHierarchy ||
@@ -55,29 +56,30 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo
 
             Transform targetTransform = targetObject.transform;
             Quaternion pieceRotation = targetTransform.rotation;
-            Quaternion ringBasis = BuildFrameBasis.ResolveGizmoBasis(pieceRotation);
-            BuildFrameBasis.ResolveTranslationAxes(
-                pieceRotation,
-                out Vector3 rightAxis,
-                out Vector3 upAxis,
-                out Vector3 forwardAxis);
+            (Quaternion pitchRingBasis, Quaternion yawRingBasis, Quaternion rollRingBasis) =
+                PieceRotationEngine.ResolveRingBases(pieceRotation);
+            (Vector3 rightAxis, Vector3 upAxis, Vector3 forwardAxis) =
+                BuildFrameBasis.ResolveTranslationAxes(pieceRotation);
 
             GizmoDrawContext context = new GizmoDrawContext(
                 targetTransform.position,
                 _calculatedRadius,
-                ringBasis,
+                ModConfig.Build.GizmoScale.Value,
+                pitchRingBasis,
+                yawRingBasis,
+                rollRingBasis,
                 BuildStateManager.ActiveAxis,
                 rightAxis,
                 upAxis,
                 forwardAxis,
-                ThemeColorConfig.GizmoPitchRingColor.Value,
-                ThemeColorConfig.GizmoYawRingColor.Value,
-                ThemeColorConfig.GizmoRollRingColor.Value,
-                ThemeColorConfig.GizmoRightArrowColor.Value,
-                ThemeColorConfig.GizmoUpArrowColor.Value,
-                ThemeColorConfig.GizmoForwardArrowColor.Value);
+                ModConfig.Build.GizmoPitchRingColor.Value,
+                ModConfig.Build.GizmoYawRingColor.Value,
+                ModConfig.Build.GizmoRollRingColor.Value,
+                ModConfig.Build.GizmoRightArrowColor.Value,
+                ModConfig.Build.GizmoUpArrowColor.Value,
+                ModConfig.Build.GizmoForwardArrowColor.Value,
+                ModConfig.Build.EnableGizmoLighting.Value);
 
-            _activeTheme.Scale = ModConfig.GizmoScale.Value;
             _activeTheme.Render(in context);
             _wasVisible = true;
         }

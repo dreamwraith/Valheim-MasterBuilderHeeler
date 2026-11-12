@@ -20,7 +20,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
         private bool _hasValidSnapshot;
 
         public PlacementInfoPanel(Transform crosshairTransform)
-            : base(crosshairTransform, "MBH_PlacementInfoPanel", ModConfig.PlacementPanelLayout)
+            : base(crosshairTransform, "MBH_PlacementInfoPanel", ModConfig.Hud.PlacementPanelLayout)
         {
             _nameRow = Panel.AddRow($"Placing {HudGlyphs.SquareCrosshatch}:", isSecondaryValue: true);
             _rotationRow = Panel.AddRow($"Rotation {HudGlyphs.CircledBullet}:", isSecondaryValue: true);
@@ -36,15 +36,15 @@ namespace MasterBuilderHeeler.Core.UI.Panels
         public void Refresh(Player localPlayer)
         {
             bool isTerrainOp = BuildStateManager.IsTerrainOpGhostActive;
-            bool showName = ModConfig.ShowGhostName.Value;
-            bool showPrefab = ModConfig.ShowGhostPrefab.Value;
-            bool showRotation = ModConfig.ShowGhostEuler.Value && !isTerrainOp;
-            bool showQuaternion = ModConfig.ShowGhostQuaternion.Value && !isTerrainOp;
-            bool showDistance = ModConfig.ShowGhostDistance.Value;
-            bool showPosition = ModConfig.ShowGhostWorldPosition.Value;
+            bool showName = ModConfig.Hud.ShowGhostName.Value;
+            bool showPrefab = ModConfig.Hud.ShowGhostPrefab.Value;
+            bool showRotation = ModConfig.Hud.ShowGhostEuler.Value && !isTerrainOp;
+            bool showQuaternion = ModConfig.Hud.ShowGhostQuaternion.Value && !isTerrainOp;
+            bool showDistance = ModConfig.Hud.ShowGhostDistance.Value;
+            bool showPosition = ModConfig.Hud.ShowGhostWorldPosition.Value;
             bool hasAnyRow = showName || showPrefab || showRotation || showQuaternion || showDistance || showPosition;
 
-            if (!ModConfig.PlacementPanelLayout.Show.Value || !hasAnyRow)
+            if (!ModConfig.Hud.PlacementPanelLayout.Show.Value || !hasAnyRow)
             {
                 SetActive(false);
                 return;
@@ -181,22 +181,22 @@ namespace MasterBuilderHeeler.Core.UI.Panels
 
         private void SubscribeFieldEvents()
         {
-            ModConfig.ShowGhostName.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowGhostPrefab.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowGhostEuler.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowGhostQuaternion.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowGhostDistance.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowGhostWorldPosition.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostName.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostPrefab.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostEuler.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostQuaternion.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostDistance.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostWorldPosition.SettingChanged += OnFieldVisibilityChanged;
         }
 
         private void UnsubscribeFieldEvents()
         {
-            ModConfig.ShowGhostName.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowGhostPrefab.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowGhostEuler.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowGhostQuaternion.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowGhostDistance.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowGhostWorldPosition.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostName.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostPrefab.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostEuler.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostQuaternion.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostDistance.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowGhostWorldPosition.SettingChanged -= OnFieldVisibilityChanged;
         }
 
         private void OnFieldVisibilityChanged(object sender, EventArgs eventArgs)

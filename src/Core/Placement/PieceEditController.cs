@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using MasterBuilderHeeler.Configuration;
+using MasterBuilderHeeler.Core.Input;
 using MasterBuilderHeeler.Core.Rotation;
 using MasterBuilderHeeler.Core.State;
 using MasterBuilderHeeler.Core.Translation;
+using MasterBuilderHeeler.Core.UI;
 using MasterBuilderHeeler.Core.Validation;
 using MasterBuilderHeeler.Utilities;
 using UnityEngine;
@@ -22,7 +24,7 @@ namespace MasterBuilderHeeler.Core.Placement
         {
             // hold the WearNTear sweeps during an edit or unsupported pieces just break mid move lol
             // alternatively, delete these lines and laugh when people constantly collapse massive builds
-            if (ModConfig.EnableMod.Value && BuildStateManager.EditState == PlacementEditState.InPlaceEdit)
+            if (ModConfig.General.EnableMod.Value && BuildStateManager.EditState == PlacementEditState.InPlaceEdit)
             {
                 updater.m_sleepUntil = updater.m_sleepUntilNext = Time.time + 0.5f;
                 updater.m_index = 0;
@@ -117,8 +119,8 @@ namespace MasterBuilderHeeler.Core.Placement
             PieceRotationEngine.MatchPieceRotation(targetPiece);
 
             string displayName = PieceUtils.GetDisplayName(targetPiece);
-            string commitKey = KeyLabelFormatter.Format(KeyboardMouseConfig.CommitPieceEditKey);
-            string cancelKey = KeyLabelFormatter.Format(KeyboardMouseConfig.CancelPieceEditKey);
+            string commitKey = HudKeybindFormatter.Format(BuildActions.CommitPieceEdit);
+            string cancelKey = HudKeybindFormatter.Format(BuildActions.CancelPieceEdit);
             HudMessageUtils.ShowTopLeft($"Editing {displayName} ([{commitKey}] Commit | [{cancelKey}] Cancel)");
             if (ModConfig.IsInfoLogging)
             {

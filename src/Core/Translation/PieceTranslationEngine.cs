@@ -48,11 +48,8 @@ namespace MasterBuilderHeeler.Core.Translation
 
             Quaternion targetRotation = targetObject.transform.rotation;
             float step = BuildStateManager.GetActiveTranslationStep();
-            BuildFrameBasis.ResolveTranslationAxes(
-                targetRotation,
-                out Vector3 rightAxis,
-                out Vector3 upAxis,
-                out Vector3 forwardAxis);
+            (Vector3 rightAxis, Vector3 upAxis, Vector3 forwardAxis) =
+                BuildFrameBasis.ResolveTranslationAxes(targetRotation);
 
             Vector3 delta = ((rightAxis * rawNudgeSigns.x) + (upAxis * rawNudgeSigns.y) + (forwardAxis * rawNudgeSigns.z)) * step;
             if (delta == Vector3.zero)
@@ -76,12 +73,11 @@ namespace MasterBuilderHeeler.Core.Translation
                     PlacementEditState.InPlaceEdit => BuildStateManager.EditedPiecePosition,
                     _ => targetObject.transform.position
                 };
-                Vector3 steppedPosition = GridAlignmentEngine.AlignAndStepPosition(
+                (Vector3 steppedPosition, Vector3 alignedBasePosition) = GridAlignmentEngine.AlignAndStepPosition(
                     targetPiece,
                     basePosition,
                     targetRotation,
-                    delta,
-                    out Vector3 alignedBasePosition);
+                    delta);
                 // so originally i had a bug here that kept adding grid snaps twice because reasons. bug dead. we gucci
                 effectiveDelta = editState == PlacementEditState.Normal
                     ? steppedPosition - alignedBasePosition

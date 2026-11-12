@@ -1,15 +1,12 @@
 using MasterBuilderHeeler.Configuration;
-using MasterBuilderHeeler.Core.State;
 using UnityEngine;
 
 namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
 {
-    public sealed class WireframeGizmoRenderer : IGizmoRenderer
+    public sealed class WireframeGizmoRenderer : GizmoRendererBase
     {
         private const float ActiveRingAlpha = 0.95f;
         private const float InactiveRingAlpha = 0.45f;
-        private const float ActiveRingScaleMultiplier = 1.12f;
-        private const float ArrowLengthScale = 1.35f;
 
         private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
 
@@ -21,33 +18,13 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
         private Mesh? _arrowMesh;
         private Material? _material;
 
-        public GizmoStyle Style => GizmoStyle.ProceduralWireframe;
+        public override GizmoStyle Style => GizmoStyle.ProceduralWireframe;
 
-        public float Scale { get; set; } = 1.0f;
+        protected override float ActiveRingScaleMultiplier => 1.12f;
 
-        public void Render(in GizmoDrawContext context)
-        {
-            EnsureResources();
-            if (!_material || !_xRingMesh || !_yRingMesh || !_zRingMesh || !_arrowMesh)
-            {
-                return;
-            }
+        protected override float ArrowLengthScale => 1.35f;
 
-            DrawAxisRing(in context, _xRingMesh, _material, RotationAxis.Pitch, context.PitchRingColor);
-            DrawAxisRing(in context, _yRingMesh, _material, RotationAxis.Yaw, context.YawRingColor);
-            DrawAxisRing(in context, _zRingMesh, _material, RotationAxis.Roll, context.RollRingColor);
-
-            float arrowScale = context.Radius * Scale * ArrowLengthScale;
-            DrawArrow(_arrowMesh, _material, context.Center, context.RightAxis, context.RightArrowColor, arrowScale);
-            DrawArrow(_arrowMesh, _material, context.Center, context.UpAxis, context.UpArrowColor, arrowScale);
-            DrawArrow(_arrowMesh, _material, context.Center, context.ForwardAxis, context.ForwardArrowColor, arrowScale);
-        }
-
-        public void OnHide()
-        {
-        }
-
-        public void Dispose()
+        public override void Dispose()
         {
             DestroyUnityObject(ref _material);
             DestroyUnityObject(ref _xRingMesh);
@@ -56,16 +33,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
             DestroyUnityObject(ref _arrowMesh);
         }
 
-        private static void DestroyUnityObject<T>(ref T? unityObject) where T : Object
-        {
-            if (unityObject)
-            {
-                Object.Destroy(unityObject);
-                unityObject = null;
-            }
-        }
-
-        private void EnsureResources()
+        protected override bool EnsureResources()
         {
             if (!_xRingMesh)
             {
@@ -92,7 +60,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
                 Shader? shader = OverlayShaderUtils.FindUnlitVertexColorShader();
                 if (!shader)
                 {
-                    return;
+                    return false;
                 }
 
                 _material = new Material(shader)
@@ -103,39 +71,29 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Wireframe
                     hideFlags = HideFlags.HideAndDontSave
                 };
             }
+
+            return true;
         }
 
-        private void DrawAxisRing(
-            in GizmoDrawContext context,
-            Mesh ringMesh,
-            Material material,
-            RotationAxis ringAxis,
-            Color baseColor)
+        protected override void DrawRing(GizmoAxis axis, Matrix4x4 matrix, float ringScale, Color color, bool isActive)
         {
-            bool isActive = (context.ActiveAxes & ringAxis) != 0;
-            Color ringColor = baseColor;
-            ringColor.a *= isActive ? ActiveRingAlpha : InactiveRingAlpha;
+            Mesh? ringMesh = axis switch
+            {
+                GizmoAxis.X => _xRingMesh,
+                GizmoAxis.Y => _yRingMesh,
+                _ => _zRingMesh
+            };
 
-            float ringScale = context.Radius * Scale * (isActive ? ActiveRingScaleMultiplier : 1.0f);
-            _propertyBlock.SetColor(ColorPropertyId, ringColor);
-            Matrix4x4 matrix = Matrix4x4.TRS(context.Center, context.RingBasis, Vector3.one * ringScale);
-            Graphics.DrawMesh(ringMesh, matrix, material, 0, null, 0, _propertyBlock);
+            color.a *= isActive ? ActiveRingAlpha : InactiveRingAlpha;
+            _propertyBlock.SetColor(ColorPropertyId, color);
+            Graphics.DrawMesh(ringMesh!, matrix, _material!, 0, null, 0, _propertyBlock);
         }
 
-        private void DrawArrow(
-            Mesh arrowMesh,
-            Material material,
-            Vector3 origin,
-            Vector3 direction,
-            Color color,
-            float scale)
+        // every arrow is the same lines, so one mesh does for all three
+        protected override void DrawArrow(GizmoAxis axis, Matrix4x4 matrix, float arrowScale, Color color)
         {
             _propertyBlock.SetColor(ColorPropertyId, color);
-            Quaternion rotation = direction.sqrMagnitude > 0.0001f
-                ? Quaternion.FromToRotation(Vector3.forward, direction)
-                : Quaternion.identity;
-            Matrix4x4 matrix = Matrix4x4.TRS(origin, rotation, Vector3.one * scale);
-            Graphics.DrawMesh(arrowMesh, matrix, material, 0, null, 0, _propertyBlock);
+            Graphics.DrawMesh(_arrowMesh!, matrix, _material!, 0, null, 0, _propertyBlock);
         }
     }
 }

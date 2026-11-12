@@ -60,7 +60,7 @@ namespace MasterBuilderHeeler.Core.UI
             _backgroundImage.type = Image.Type.Sliced;
             _backgroundImage.color = initialBackground;
             _backgroundImage.raycastTarget = false;
-            _backgroundImage.enabled = ModConfig.ShowInfoPanelBackground.Value && initialBackground.a > 0.001f;
+            _backgroundImage.enabled = ModConfig.Hud.ShowInfoPanelBackground.Value && initialBackground.a > 0.001f;
 
             _horizontalLayout = _panelRoot.AddComponent<HorizontalLayoutGroup>();
             _horizontalLayout.spacing = 8f;
@@ -75,8 +75,8 @@ namespace MasterBuilderHeeler.Core.UI
             rootFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             rootFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            _leftColumnRect = CreateColumn("LeftColumn", out _leftLayout, out _leftLayoutElement);
-            _rightColumnRect = CreateColumn("RightColumn", out _rightLayout, out _rightLayoutElement);
+            (_leftColumnRect, _leftLayout, _leftLayoutElement) = CreateColumn("LeftColumn");
+            (_rightColumnRect, _rightLayout, _rightLayoutElement) = CreateColumn("RightColumn");
 
             SetPosition(_layoutSettings.Offset);
             SubscribeLayoutEvents();
@@ -198,17 +198,6 @@ namespace MasterBuilderHeeler.Core.UI
             }
         }
 
-        public void ObserveAllRowLabels()
-        {
-            float maxLeftWidth = 0f;
-            for (int index = 0; index < _rows.Count; index++)
-            {
-                maxLeftWidth = Mathf.Max(maxLeftWidth, _rows[index].Label.GetPreferredValues(_rows[index].Label.text).x);
-            }
-
-            ApplyObservedWidths(maxLeftWidth, 0f);
-        }
-
         public void ObserveSampleWidths(string sampleLabel, string sampleValue)
         {
             if (_rows.Count == 0)
@@ -310,7 +299,7 @@ namespace MasterBuilderHeeler.Core.UI
             return _cachedRoundedSprite;
         }
 
-        private RectTransform CreateColumn(string columnName, out VerticalLayoutGroup layoutGroup, out LayoutElement layoutElement)
+        private (RectTransform Rect, VerticalLayoutGroup Layout, LayoutElement LayoutElement) CreateColumn(string columnName)
         {
             GameObject columnObject = new GameObject(columnName, typeof(RectTransform));
             columnObject.transform.SetParent(_rootRect, false);
@@ -318,7 +307,7 @@ namespace MasterBuilderHeeler.Core.UI
             RectTransform columnRect = (RectTransform)columnObject.transform;
             columnRect.sizeDelta = Vector2.zero;
 
-            layoutGroup = columnObject.AddComponent<VerticalLayoutGroup>();
+            VerticalLayoutGroup layoutGroup = columnObject.AddComponent<VerticalLayoutGroup>();
             layoutGroup.spacing = 6f;
             layoutGroup.childAlignment = TextAnchor.UpperLeft;
             layoutGroup.childForceExpandWidth = true;
@@ -326,8 +315,8 @@ namespace MasterBuilderHeeler.Core.UI
             layoutGroup.childControlWidth = true;
             layoutGroup.childControlHeight = true;
 
-            layoutElement = columnObject.AddComponent<LayoutElement>();
-            return columnRect;
+            LayoutElement layoutElement = columnObject.AddComponent<LayoutElement>();
+            return (columnRect, layoutGroup, layoutElement);
         }
 
         private TextMeshProUGUI CreateLabel(Transform parentTransform, string objectName)
@@ -384,8 +373,8 @@ namespace MasterBuilderHeeler.Core.UI
             _layoutSettings.FontSize.SettingChanged += OnFontSizeSettingChanged;
             _layoutSettings.BackgroundColor.SettingChanged += OnBackgroundSettingChanged;
             _layoutSettings.Show.SettingChanged += OnVisibilitySettingChanged;
-            ModConfig.ShowInfoPanelBackground.SettingChanged += OnBackgroundSettingChanged;
-            ModConfig.EnableMod.SettingChanged += OnVisibilitySettingChanged;
+            ModConfig.Hud.ShowInfoPanelBackground.SettingChanged += OnBackgroundSettingChanged;
+            ModConfig.General.EnableMod.SettingChanged += OnVisibilitySettingChanged;
             HudTheme.ThemeChanged += ApplyThemeColors;
         }
 
@@ -396,8 +385,8 @@ namespace MasterBuilderHeeler.Core.UI
             _layoutSettings.FontSize.SettingChanged -= OnFontSizeSettingChanged;
             _layoutSettings.BackgroundColor.SettingChanged -= OnBackgroundSettingChanged;
             _layoutSettings.Show.SettingChanged -= OnVisibilitySettingChanged;
-            ModConfig.ShowInfoPanelBackground.SettingChanged -= OnBackgroundSettingChanged;
-            ModConfig.EnableMod.SettingChanged -= OnVisibilitySettingChanged;
+            ModConfig.Hud.ShowInfoPanelBackground.SettingChanged -= OnBackgroundSettingChanged;
+            ModConfig.General.EnableMod.SettingChanged -= OnVisibilitySettingChanged;
             HudTheme.ThemeChanged -= ApplyThemeColors;
         }
 
@@ -472,7 +461,7 @@ namespace MasterBuilderHeeler.Core.UI
         }
 
         private void OnBackgroundSettingChanged(object sender, EventArgs eventArgs) =>
-            SetBackground(ModConfig.ShowInfoPanelBackground.Value, _layoutSettings.BackgroundColor.Value);
+            SetBackground(ModConfig.Hud.ShowInfoPanelBackground.Value, _layoutSettings.BackgroundColor.Value);
 
         private void OnVisibilitySettingChanged(object sender, EventArgs eventArgs)
         {
@@ -481,7 +470,7 @@ namespace MasterBuilderHeeler.Core.UI
                 return;
             }
 
-            if (!ModConfig.EnableMod.Value || !_layoutSettings.Show.Value)
+            if (!ModConfig.General.EnableMod.Value || !_layoutSettings.Show.Value)
             {
                 if (_onDeactivated != null)
                 {

@@ -5,7 +5,7 @@ namespace MasterBuilderHeeler.Core.Visuals
     internal static class OverlayShaderUtils
     {
         // valheim builds strip the standard unlit shaders. these built ins stick around and multiply material color
-        // by vertex color with alpha blending, which is all the overlays need
+        // by vertex color with alpha blending. the overlays need nothing more
         public static Shader? FindUnlitVertexColorShader()
         {
             Shader shader = Shader.Find("Sprites/Default");

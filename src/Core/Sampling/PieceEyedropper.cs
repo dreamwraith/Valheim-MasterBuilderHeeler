@@ -12,11 +12,11 @@ namespace MasterBuilderHeeler.Core.Sampling
         public static bool IsCustomSamplingAvailable() =>
             BuildStateManager.IsPrecisionModeActive &&
             BuildStateManager.EditState != PlacementEditState.InPlaceEdit &&
-            ModConfig.PrecisionCopyBehavior.Value != PrecisionCopyMode.DisableCustom;
+            ModConfig.Build.PrecisionCopyBehavior.Value != PrecisionCopyMode.DisableCustom;
 
         public static bool ResolveNativeCopy(Player player)
         {
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 return true;
             }
@@ -34,7 +34,7 @@ namespace MasterBuilderHeeler.Core.Sampling
             // turns out the game had piece pick this whole time, and my dumb ass didnt even know. wtf.
             // its keybind is hardcoded and cant be remapped, so first, what the fuck iron gate, 
             // but also, this just lets you choose which one wins. this one is for Searica <3
-            switch (ModConfig.PrecisionCopyBehavior.Value)
+            switch (ModConfig.Build.PrecisionCopyBehavior.Value)
             {
                 case PrecisionCopyMode.OverrideNative:
                     SampleTargetPieceAndRotation(player);

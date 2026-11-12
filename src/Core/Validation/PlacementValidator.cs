@@ -39,8 +39,8 @@ namespace MasterBuilderHeeler.Core.Validation
 
         public static void OverrideStationRangePoint(ref Vector3 point)
         {
-            if (!ModConfig.EnableMod.Value ||
-                (!BuildStateManager.IsBuildCameraActive && !ModConfig.ValidateStationRangeAtPieceLocation.Value))
+            if (!ModConfig.General.EnableMod.Value ||
+                (!BuildStateManager.IsBuildCameraActive && !ModConfig.General.ValidateStationRangeAtPieceLocation.Value))
             {
                 return;
             }

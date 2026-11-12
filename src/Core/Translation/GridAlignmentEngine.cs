@@ -21,7 +21,7 @@ namespace MasterBuilderHeeler.Core.Translation
                 return position;
             }
 
-            ResolveGridAxes(piece, out Vector3 gridOrigin, out Quaternion gridBasis, out float step, out bool excludeVertical);
+            (Vector3 gridOrigin, Quaternion gridBasis, float step, bool excludeVertical) = ResolveGridAxes(piece);
             Vector3 snapOffset = GetActiveSnapOffset(piece, rotation);
             Vector3 anchorPosition = position + snapOffset;
 
@@ -38,14 +38,13 @@ namespace MasterBuilderHeeler.Core.Translation
             return alignedAnchor - snapOffset;
         }
 
-        public static Vector3 AlignAndStepPosition(
+        public static (Vector3 SteppedPosition, Vector3 AlignedPosition) AlignAndStepPosition(
             Piece piece,
             Vector3 currentPosition,
             Quaternion rotation,
-            Vector3 worldDelta,
-            out Vector3 alignedPosition)
+            Vector3 worldDelta)
         {
-            ResolveGridAxes(piece, out Vector3 gridOrigin, out Quaternion gridBasis, out float step, out bool excludeVertical);
+            (Vector3 gridOrigin, Quaternion gridBasis, float step, bool excludeVertical) = ResolveGridAxes(piece);
             Vector3 snapOffset = GetActiveSnapOffset(piece, rotation);
             Vector3 anchorPosition = currentPosition + snapOffset;
 
@@ -56,7 +55,7 @@ namespace MasterBuilderHeeler.Core.Translation
                 excludeVertical ? rawCoords.y : MathUtils.SnapScalar(rawCoords.y, step),
                 MathUtils.SnapScalar(rawCoords.z, step));
 
-            alignedPosition = (gridOrigin + (gridBasis * alignedCoords)) - snapOffset;
+            Vector3 alignedPosition = (gridOrigin + (gridBasis * alignedCoords)) - snapOffset;
 
             Vector3 localDelta = inverseBasis * worldDelta;
             Vector3 steppedCoords = alignedCoords;
@@ -84,7 +83,7 @@ namespace MasterBuilderHeeler.Core.Translation
             }
 
             Vector3 steppedAnchor = gridOrigin + (gridBasis * steppedCoords);
-            return steppedAnchor - snapOffset;
+            return (steppedAnchor - snapOffset, alignedPosition);
         }
 
         // with a manual snap point picked, that point is what lines up with the grid instead of the piece origin
@@ -120,26 +119,17 @@ namespace MasterBuilderHeeler.Core.Translation
             ? (Mathf.Floor((value / step) + BoundaryEpsilon) + 1f) * step
             : (Mathf.Ceil((value / step) - BoundaryEpsilon) - 1f) * step;
 
-        private static void ResolveGridAxes(
-            Piece piece,
-            out Vector3 gridOrigin,
-            out Quaternion gridBasis,
-            out float step,
-            out bool excludeVertical)
+        private static GridAxes ResolveGridAxes(Piece piece)
         {
-            step = BuildStateManager.GridCellSize;
-            excludeVertical = !ModConfig.SnapVerticalToGrid.Value ||
+            float step = BuildStateManager.GridCellSize;
+            bool excludeVertical = !ModConfig.Build.SnapVerticalToGrid.Value ||
                 piece.m_category == Piece.PieceCategory.Furniture || piece.m_groundPiece || piece.m_waterPiece;
 
-            if (BuildStateManager.ActiveGridFrame == GridFrame.Local)
-            {
-                gridOrigin = BuildStateManager.LocalGridOrigin;
-                gridBasis = BuildStateManager.LocalGridRotation;
-                return;
-            }
-
-            gridOrigin = Vector3.zero;
-            gridBasis = Quaternion.identity;
+            return BuildStateManager.ActiveGridFrame == GridFrame.Local
+                ? new GridAxes(BuildStateManager.LocalGridOrigin, BuildStateManager.LocalGridRotation, step, excludeVertical)
+                : new GridAxes(Vector3.zero, Quaternion.identity, step, excludeVertical);
         }
+
+        private record struct GridAxes(Vector3 Origin, Quaternion Basis, float Step, bool ExcludeVertical);
     }
 }

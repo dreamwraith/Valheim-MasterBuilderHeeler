@@ -17,11 +17,11 @@ namespace MasterBuilderHeeler.Patches
             yield return AccessTools.DeclaredMethod(typeof(Player), nameof(Player.RemovePiece));
         }
 
-        // has to run first so __state always gets set, even if another prefix skips the original. postfix restores from it
+        // runs first so __state gets set even when another prefix skips the original. postfix restores from it
         [HarmonyPrefix]
         [HarmonyPriority(Priority.First)]
         private static void Prefix(Player __instance, out float __state) =>
-            BuildReachService.ApplyReachExpansion(__instance, out __state);
+            __state = BuildReachService.ApplyReachExpansion(__instance);
 
         [HarmonyPostfix]
         private static void Postfix(Player __instance, float __state) =>

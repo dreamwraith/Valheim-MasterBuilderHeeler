@@ -1,59 +1,72 @@
 using System;
 using MasterBuilderHeeler.Configuration;
+using MasterBuilderHeeler.Core.Input;
 using MasterBuilderHeeler.Core.State;
-using MasterBuilderHeeler.Utilities;
 using UnityEngine;
 
 namespace MasterBuilderHeeler.Core.UI.Panels
 {
-    public sealed class PrecisionInfoPanel : HudPanelBase
+    public sealed class PrecisionInfoPanel : HudKeymapPanel
     {
+        // a terrain tool has nothing to rotate
+        private static readonly Func<bool> ShowsRotation = () => !BuildStateManager.IsTerrainOpGhostActive;
+        private static readonly Func<bool> ShowsRoofMode = () =>
+            !BuildStateManager.IsTerrainOpGhostActive && BuildStateManager.IsCornerRoofTarget;
+        // the symbol on the reset axis row only shows which axis the key resets. thats not a status so the row
+        // still goes away when its key is hidden
+        private static readonly Func<bool> ShowsResetAxis = () =>
+            !BuildStateManager.IsTerrainOpGhostActive && ModConfig.Hud.Get(PrecisionKeymapRow.ResetAxis).ShowKeymap.Value;
+
         private readonly HudLabelRow _stepSummaryRow;
-        private readonly HudLabelRow _stepPresetRow;
-        private readonly HudLabelRow _adjustStepRow;
-        private readonly HudLabelRow _resetStepRow;
-        private readonly HudLabelRow _rotationFrameRow;
-        private readonly HudLabelRow _roofModeRow;
-        private readonly HudLabelRow _rotateRow;
-        private readonly HudLabelRow _yawAxisRow;
-        private readonly HudLabelRow _pitchAxisRow;
-        private readonly HudLabelRow _rollAxisRow;
-        private readonly HudLabelRow _resetAxisRow;
-        private readonly HudLabelRow _resetAllRow;
-        private readonly HudLabelRow _nudgeFrameRow;
-        private readonly HudLabelRow _nudgeRow;
-        private readonly HudLabelRow _sideNudgeRow;
-        private readonly HudLabelRow _verticalNudgeRow;
-        private readonly HudLabelRow _resetNudgeRow;
-        private readonly HudLabelRow _resetSettingsRow;
 
         private PanelStateSnapshot _lastSnapshot;
         private bool _hasValidSnapshot;
         private int _preseededKeybindVersion = -1;
 
         public PrecisionInfoPanel(Transform parentTransform)
-            : base(parentTransform, "MBH_PrecisionInfoPanel", ModConfig.PrecisionPanelLayout)
+            : base(parentTransform, "MBH_PrecisionInfoPanel", ModConfig.Hud.PrecisionPanelLayout)
         {
             Panel.SetFloatingHeader("Precision");
 
+            // step size has no key, so it isnt a keymap row and has no setting
             _stepSummaryRow = Panel.AddRow("Step Size:");
-            _stepPresetRow = Panel.AddRow("Step Preset:");
-            _adjustStepRow = Panel.AddRow("Adjust Step:");
-            _resetStepRow = Panel.AddRow("Reset Step:");
-            _rotationFrameRow = Panel.AddRow("Rotation Frame:");
-            _roofModeRow = Panel.AddRow("Roof Mode:");
-            _rotateRow = Panel.AddRow("Rotate:");
-            _yawAxisRow = Panel.AddRow("Yaw Axis:");
-            _pitchAxisRow = Panel.AddRow("Pitch Axis:");
-            _rollAxisRow = Panel.AddRow("Roll Axis:");
-            _resetAxisRow = Panel.AddRow("Reset Axis:");
-            _resetAllRow = Panel.AddRow("Reset All Axes:");
-            _nudgeFrameRow = Panel.AddRow("Nudge Frame:");
-            _nudgeRow = Panel.AddRow("Nudge:");
-            _sideNudgeRow = Panel.AddRow(string.Empty);
-            _verticalNudgeRow = Panel.AddRow(string.Empty);
-            _resetNudgeRow = Panel.AddRow("Reset Nudge:");
-            _resetSettingsRow = Panel.AddRow("Reset Settings:");
+
+            Row(PrecisionKeymapRow.StepPreset,
+                () => HudKeybindFormatter.FormatPair(BuildActions.DecreaseStepPreset, BuildActions.IncreaseStepPreset),
+                indicator: new HudIndicator(() => FormatStepPips(BuildStateManager.ActiveStepPreset), () => FormatStepPips(StepPreset.Fine)));
+            Row(PrecisionKeymapRow.AdjustStep,
+                () => HudKeybindFormatter.FormatPair(BuildActions.HalveStepMultiplier, BuildActions.DoubleStepMultiplier));
+            Row(PrecisionKeymapRow.ResetStep, BuildActions.ResetStepMultiplier);
+            Row(PrecisionKeymapRow.RotationFrame, BuildActions.CycleRotationFrame, ShowsRotation,
+                HudIndicator.Choice(
+                    () => BuildStateManager.ActiveRotationFrame == RotationFrame.Local,
+                    () => HudTheme.StatusRotationLocal,
+                    () => HudTheme.StatusRotationWorld));
+            Row(PrecisionKeymapRow.RoofMode, BuildActions.ToggleRoofMode, ShowsRoofMode,
+                HudIndicator.OnOff(() => BuildStateManager.IsRoofModeActive));
+            Row(PrecisionKeymapRow.Rotate, HudKeybindFormatter.FormatRotate, ShowsRotation,
+                new HudIndicator(() => FormatAxisName(BuildStateManager.ActiveAxis), () => FormatAxisName(RotationAxis.Pitch)));
+            Row(PrecisionKeymapRow.YawAxis, BuildActions.SelectYawAxis, ShowsRotation,
+                AxisIndicator(RotationAxis.Yaw, HudGlyphs.YawInactive));
+            Row(PrecisionKeymapRow.PitchAxis, BuildActions.SelectPitchAxis, ShowsRotation,
+                AxisIndicator(RotationAxis.Pitch, HudGlyphs.PitchInactive));
+            Row(PrecisionKeymapRow.RollAxis, BuildActions.SelectRollAxis, ShowsRotation,
+                AxisIndicator(RotationAxis.Roll, HudGlyphs.CircleHollow));
+            Row(PrecisionKeymapRow.ResetAxis, BuildActions.ResetActiveAxis, ShowsResetAxis,
+                new HudIndicator(() => FormatAxisSymbol(BuildStateManager.ActiveAxis), () => FormatAxisSymbol(RotationAxis.Pitch)),
+                FormatResetAxisLabel);
+            Row(PrecisionKeymapRow.ResetAllAxes, BuildActions.ResetAllAxes, ShowsRotation);
+            Row(PrecisionKeymapRow.NudgeFrame, BuildActions.CycleTranslationFrame,
+                indicator: HudIndicator.Choice(
+                    () => BuildStateManager.ActiveTranslationFrame == TranslationFrame.World,
+                    () => HudTheme.StatusNudgeWorld,
+                    () => HudTheme.StatusNudgeLocal));
+            // three rows on one setting. the two under the first have no label of their own
+            Row(PrecisionKeymapRow.Nudge, HudKeybindFormatter.FormatForwardNudge);
+            Row(PrecisionKeymapRow.Nudge, HudKeybindFormatter.FormatSideNudge, label: string.Empty);
+            Row(PrecisionKeymapRow.Nudge, HudKeybindFormatter.FormatVerticalNudge, label: string.Empty);
+            Row(PrecisionKeymapRow.ResetNudge, BuildActions.ResetNudge);
+            Row(PrecisionKeymapRow.ResetSettings, BuildActions.ResetBuildSettings);
 
             Panel.SetAnchors(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f));
 
@@ -63,7 +76,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
 
         public void Refresh(Player localPlayer)
         {
-            if (!ModConfig.PrecisionPanelLayout.Show.Value)
+            if (!ModConfig.Hud.PrecisionPanelLayout.Show.Value)
             {
                 SetActive(false);
                 return;
@@ -86,6 +99,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
                 PreseedConstantWidth();
             }
 
+            // same check as the Global panel. the step size row is the one thing here that takes values from it
             PanelStateSnapshot snapshot = new PanelStateSnapshot(
                 editState,
                 BuildStateManager.IsTerrainOpGhostActive,
@@ -109,14 +123,6 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             _lastSnapshot = snapshot;
             _hasValidSnapshot = true;
 
-            string halveKey = KeyLabelFormatter.Format(KeyboardMouseConfig.HalveStepMultiplierKey);
-            string doubleKey = KeyLabelFormatter.Format(KeyboardMouseConfig.DoubleStepMultiplierKey);
-            string resetScaleKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ResetStepMultiplierKey);
-
-            _stepPresetRow.SetValue(FormatStepPresetRow(snapshot.ActiveStepPreset));
-            _adjustStepRow.SetValue(HudTheme.Keycap($"{halveKey}{HudTheme.PipeSeparator}{doubleKey}"));
-            _resetStepRow.SetValue(HudTheme.Keycap(resetScaleKey));
-
             bool isCustomMultiplier = !Mathf.Approximately(snapshot.StepMultiplier, 1f);
             string scaleSuffix = isCustomMultiplier
                 ? $"{HudTheme.BrokenBarSeparator}{snapshot.StepMultiplier:0.###}x"
@@ -129,85 +135,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
 
             _stepSummaryRow.SetValue($"<color={stepColor}><b>{stepLabel}</b></color> <color={HudTheme.SecondaryValueHex}>{HudTheme.Measure(stepSummary)}</color>");
 
-            bool showRotation = !snapshot.IsTerrainOp;
-            bool showRoof = showRotation && snapshot.IsCornerRoof;
-            _rotationFrameRow.SetActive(showRotation);
-            _roofModeRow.SetActive(showRoof);
-            _rotateRow.SetActive(showRotation);
-            _yawAxisRow.SetActive(showRotation);
-            _pitchAxisRow.SetActive(showRotation);
-            _rollAxisRow.SetActive(showRotation);
-            _resetAxisRow.SetActive(showRotation);
-            _resetAllRow.SetActive(showRotation);
-
-            if (showRotation)
-            {
-                string cycleFrameKey = KeyLabelFormatter.Format(KeyboardMouseConfig.CycleRotationFrameKey);
-                string frameStatus = snapshot.ActiveRotationFrame == RotationFrame.Local
-                    ? HudTheme.StatusRotationLocal
-                    : HudTheme.StatusRotationWorld;
-                _rotationFrameRow.SetValue($"{HudTheme.Keycap(cycleFrameKey)} {frameStatus}");
-
-                if (showRoof)
-                {
-                    string roofModeKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ToggleRoofModeKey);
-                    string roofStatus = snapshot.IsRoofModeActive ? HudTheme.StatusOn : HudTheme.StatusOff;
-                    _roofModeRow.SetValue($"{HudTheme.Keycap(roofModeKey)} {roofStatus}");
-                }
-
-                RotationAxis activeAxis = snapshot.ActiveAxis;
-                string axisColorHex = HudTheme.GetAxisColorHex(activeAxis);
-                string activeAxisGlyph = activeAxis switch
-                {
-                    RotationAxis.Pitch => HudGlyphs.PitchActive,
-                    RotationAxis.Roll => HudGlyphs.CircleBullseye,
-                    _ => HudGlyphs.YawActive
-                };
-
-                string yawKey = KeyLabelFormatter.Format(KeyboardMouseConfig.SelectYawAxisKey);
-                string pitchKey = KeyLabelFormatter.Format(KeyboardMouseConfig.SelectPitchAxisKey);
-                string rollKey = KeyLabelFormatter.Format(KeyboardMouseConfig.SelectRollAxisKey);
-                string resetAxisKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ResetActiveAxisKey);
-                string resetAllKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ResetAllAxesKey);
-
-                _rotateRow.SetValue($"{HudTheme.Keycap("Scroll")} <color={axisColorHex}><b>{activeAxisGlyph} {activeAxis}</b></color>");
-
-                _yawAxisRow.SetValue(HudTheme.FormatKeycapToggle(
-                    yawKey,
-                    (activeAxis & RotationAxis.Yaw) != 0,
-                    HudTheme.AxisYawHex,
-                    HudGlyphs.YawActive,
-                    HudGlyphs.YawInactive));
-
-                _pitchAxisRow.SetValue(HudTheme.FormatKeycapToggle(
-                    pitchKey,
-                    (activeAxis & RotationAxis.Pitch) != 0,
-                    HudTheme.AxisPitchHex,
-                    HudGlyphs.PitchActive,
-                    HudGlyphs.PitchInactive));
-
-                _rollAxisRow.SetValue(HudTheme.FormatKeycapToggle(
-                    rollKey,
-                    (activeAxis & RotationAxis.Roll) != 0,
-                    HudTheme.AxisRollHex,
-                    HudGlyphs.CircleBullseye,
-                    HudGlyphs.CircleHollow));
-
-                _resetAxisRow.SetText($"Reset <color={axisColorHex}><b>{activeAxis}</b></color>:", HudTheme.Keycap(resetAxisKey));
-                _resetAllRow.SetValue(HudTheme.Keycap(resetAllKey));
-            }
-
-            string cycleTranslationFrameKey = KeyLabelFormatter.Format(KeyboardMouseConfig.CycleTranslationFrameKey);
-            string nudgeFrameStatus = snapshot.ActiveTranslationFrame == TranslationFrame.World
-                ? HudTheme.StatusNudgeWorld
-                : HudTheme.StatusNudgeLocal;
-            _nudgeFrameRow.SetValue($"{HudTheme.Keycap(cycleTranslationFrameKey)} {nudgeFrameStatus}");
-            _nudgeRow.SetValue(HudTheme.Keycap(HudKeybindFormatter.FormatForwardNudge()));
-            _sideNudgeRow.SetValue(HudTheme.Keycap(HudKeybindFormatter.FormatSideNudge()));
-            _verticalNudgeRow.SetValue(HudTheme.Keycap(HudKeybindFormatter.FormatVerticalNudge()));
-            _resetNudgeRow.SetValue(HudTheme.Keycap(KeyLabelFormatter.Format(KeyboardMouseConfig.ResetNudgeKey)));
-            _resetSettingsRow.SetValue(HudTheme.Keycap(KeyLabelFormatter.Format(KeyboardMouseConfig.ResetBuildSettingsKey)));
-
+            RefreshKeymapRows();
             Panel.UpdateClampedWidth();
         }
 
@@ -227,39 +155,34 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             PreseedConstantWidth();
         }
 
-        // measures the widest text each row can show so the panel width stays put when values change
-        // i need to figure out a better way to do this when i refactor how i handle the display objects. 
-        // fuhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
-        private void PreseedConstantWidth()
+        // the symbol of an axis in the color of its gizmo ring. a ring color can be too dark to read as text so only
+        // symbols take it
+        private static string FormatAxisSymbol(RotationAxis axis)
         {
-            _preseededKeybindVersion = HudKeybindFormatter.KeybindVersion;
-            Panel.ObserveAllRowLabels();
-            Panel.ObserveSampleWidths($"Reset <color={HudTheme.AxisPitchHex}><b>Pitch</b></color>:", string.Empty);
+            string axisGlyph = axis switch
+            {
+                RotationAxis.Pitch => HudGlyphs.PitchActive,
+                RotationAxis.Roll => HudGlyphs.CircleBullseye,
+                _ => HudGlyphs.YawActive
+            };
 
-            string halveKey = KeyLabelFormatter.Format(KeyboardMouseConfig.HalveStepMultiplierKey);
-            string doubleKey = KeyLabelFormatter.Format(KeyboardMouseConfig.DoubleStepMultiplierKey);
-            string cycleFrameKey = KeyLabelFormatter.Format(KeyboardMouseConfig.CycleRotationFrameKey);
-            string roofModeKey = KeyLabelFormatter.Format(KeyboardMouseConfig.ToggleRoofModeKey);
-            string cycleTranslationFrameKey = KeyLabelFormatter.Format(KeyboardMouseConfig.CycleTranslationFrameKey);
-            string stepSample = $"5.6{HudGlyphs.Degree}{HudTheme.BrokenBarSeparator}0.125m{HudTheme.BrokenBarSeparator}0.125x";
-
-            Panel.ObserveSampleWidths(string.Empty, $"<color={HudTheme.StepCustomHex}><b>Custom</b></color> <color={HudTheme.SecondaryValueHex}>{HudTheme.Measure(stepSample)}</color>");
-            Panel.ObserveSampleWidths(string.Empty, FormatStepPresetRow(StepPreset.Fine));
-            Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap($"{halveKey}{HudTheme.PipeSeparator}{doubleKey}"));
-            Panel.ObserveSampleWidths(string.Empty, $"{HudTheme.Keycap(cycleFrameKey)} {HudTheme.StatusRotationWorld}");
-            Panel.ObserveSampleWidths(string.Empty, $"{HudTheme.Keycap(roofModeKey)} {HudTheme.StatusOff}");
-            Panel.ObserveSampleWidths(string.Empty, $"{HudTheme.Keycap("Scroll")} <color={HudTheme.AxisPitchHex}><b>{HudGlyphs.PitchActive} Pitch</b></color>");
-            Panel.ObserveSampleWidths(string.Empty, $"{HudTheme.Keycap(cycleTranslationFrameKey)} {HudTheme.StatusNudgeWorld}");
-            Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap(HudKeybindFormatter.FormatForwardNudge()));
-            Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap(HudKeybindFormatter.FormatSideNudge()));
-            Panel.ObserveSampleWidths(string.Empty, HudTheme.Keycap(HudKeybindFormatter.FormatVerticalNudge()));
+            return $"<color={HudTheme.GetAxisColorHex(axis)}><b>{axisGlyph}</b></color>";
         }
 
-        private static string FormatStepPresetRow(StepPreset activePreset)
-        {
-            string decreaseKey = KeyLabelFormatter.Format(KeyboardMouseConfig.DecreaseStepPresetKey);
-            string increaseKey = KeyLabelFormatter.Format(KeyboardMouseConfig.IncreaseStepPresetKey);
+        private static string FormatAxisName(RotationAxis axis) =>
+            $"{FormatAxisSymbol(axis)} <b>{axis}</b>";
 
+        private static HudIndicator AxisIndicator(RotationAxis axis, string inactiveGlyph) =>
+            HudIndicator.Choice(
+                () => (BuildStateManager.ActiveAxis & axis) != 0,
+                () => FormatAxisSymbol(axis),
+                () => inactiveGlyph);
+
+        private static string FormatResetAxisLabel() =>
+            $"Reset {BuildStateManager.ActiveAxis}:";
+
+        private static string FormatStepPips(StepPreset activePreset)
+        {
             string pips = string.Empty;
             for (int presetIndex = (int)StepPreset.UltraFine; presetIndex <= (int)StepPreset.Coarse; presetIndex++)
             {
@@ -269,7 +192,42 @@ namespace MasterBuilderHeeler.Core.UI.Panels
                     : HudGlyphs.ToggleInactive;
             }
 
-            return $"{HudTheme.Keycap($"{decreaseKey}{HudTheme.PipeSeparator}{increaseKey}")} {pips}";
+            return pips;
+        }
+
+        private void Row(
+            PrecisionKeymapRow row,
+            BuildAction action,
+            Func<bool>? isVisible = null,
+            HudIndicator? indicator = null,
+            Func<string>? getLabel = null) =>
+            AddKeymapRow(
+                ModConfig.Hud.Get(row),
+                () => HudKeybindFormatter.Format(action),
+                isVisible: isVisible,
+                indicator: indicator,
+                getLabel: getLabel);
+
+        // for a row whose key text is not one action: a pair of keys, the rotate row, the nudge rows
+        private void Row(
+            PrecisionKeymapRow row,
+            Func<string> getKeyText,
+            Func<bool>? isVisible = null,
+            HudIndicator? indicator = null,
+            string? label = null) =>
+            AddKeymapRow(ModConfig.Hud.Get(row), getKeyText, isVisible: isVisible, indicator: indicator, label: label);
+
+        private void PreseedConstantWidth()
+        {
+            _preseededKeybindVersion = HudKeybindFormatter.KeybindVersion;
+            Panel.ObserveSampleWidths("Reset Pitch:", string.Empty);
+
+            string stepSample = $"5.6{HudGlyphs.Degree}{HudTheme.BrokenBarSeparator}0.125m{HudTheme.BrokenBarSeparator}0.125x";
+            Panel.ObserveSampleWidths(
+                _stepSummaryRow.Label.text,
+                $"<color={HudTheme.StepCustomHex}><b>Custom</b></color> <color={HudTheme.SecondaryValueHex}>{HudTheme.Measure(stepSample)}</color>");
+
+            ObserveKeymapRowWidths();
         }
 
         private readonly struct PanelStateSnapshot : IEquatable<PanelStateSnapshot>

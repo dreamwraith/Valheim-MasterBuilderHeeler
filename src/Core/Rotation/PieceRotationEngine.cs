@@ -28,6 +28,25 @@ namespace MasterBuilderHeeler.Core.Rotation
                 : EulerRotator;
         }
 
+        // a ring sits on the axis its key really turns the piece around. local and roof rotation turn around the
+        // pieces own axes so all three rings follow the piece. world rotation steps euler angles and unity applies
+        // those as roll then pitch then yaw, so yaw is around world up, pitch is around the side axis after yaw and
+        // only roll is around the pieces own axis
+        public static (Quaternion Pitch, Quaternion Yaw, Quaternion Roll) ResolveRingBases(Quaternion pieceRotation)
+        {
+            Quaternion pieceBasis = BuildFrameBasis.ResolveGizmoBasis(pieceRotation);
+            if (!ReferenceEquals(GetActiveRotator(), EulerRotator))
+            {
+                return (pieceBasis, pieceBasis, pieceBasis);
+            }
+
+            Vector3 eulerAngles = EulerRotator.GetEulerAngles();
+            return (
+                Quaternion.Euler(eulerAngles.x, eulerAngles.y, 0f),
+                Quaternion.Euler(0f, eulerAngles.y, 0f),
+                pieceBasis);
+        }
+
         public static void UpdatePlacementInput(Player player, int rotationStepSign)
         {
             GameObject? targetObject = BuildStateManager.GetActiveTargetObject(player);
@@ -68,7 +87,7 @@ namespace MasterBuilderHeeler.Core.Rotation
 
         public static void OverrideCanRotatePiece(ref bool canRotate)
         {
-            if (ModConfig.EnableMod.Value &&
+            if (ModConfig.General.EnableMod.Value &&
                 !BuildStateManager.IsTerrainOpGhostActive &&
                 (BuildStateManager.EditState != PlacementEditState.Normal || BuildStateManager.IsPrecisionModeActive))
             {
@@ -78,7 +97,7 @@ namespace MasterBuilderHeeler.Core.Rotation
 
         public static Quaternion ResolveTargetRotation(Quaternion nativeRotation)
         {
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 return nativeRotation;
             }
@@ -144,7 +163,7 @@ namespace MasterBuilderHeeler.Core.Rotation
                 Player.m_localPlayer.m_placeRotation = 0;
             }
 
-            Plugin.LogDebug("[PieceRotationEngine] Reset all rotators to base orientation and reset native m_placeRotation to 0.");
+            Plugin.LogDebug("[PieceRotationEngine] Reset all rotators to base orientation and reset base game m_placeRotation to 0.");
         }
 
         // euler and local always hold the standard basis rotation, roof gets rebuilt from it on restore

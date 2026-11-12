@@ -30,6 +30,10 @@ namespace MasterBuilderHeeler.Core.UI
         public static string AxisYawHex { get; private set; } = string.Empty;
         public static string AxisRollHex { get; private set; } = string.Empty;
 
+        public static string ArrowRightHex { get; private set; } = string.Empty;
+        public static string ArrowUpHex { get; private set; } = string.Empty;
+        public static string ArrowForwardHex { get; private set; } = string.Empty;
+
         public static string StepUltraFineHex { get; private set; } = string.Empty;
         public static string StepExtraFineHex { get; private set; } = string.Empty;
         public static string StepFineHex { get; private set; } = string.Empty;
@@ -43,6 +47,7 @@ namespace MasterBuilderHeeler.Core.UI
         public static string PipeSeparator { get; private set; } = string.Empty;
         public static string BrokenBarSeparator { get; private set; } = string.Empty;
         public static string SlashSeparator { get; private set; } = string.Empty;
+        public static string VerticalEllipsisSeparator { get; private set; } = string.Empty;
 
         public static string StatusOn { get; private set; } = string.Empty;
         public static string StatusOff { get; private set; } = string.Empty;
@@ -62,10 +67,17 @@ namespace MasterBuilderHeeler.Core.UI
         {
             Cleanup();
 
-            ModConfig.WorldGridColor.SettingChanged += OnColorSettingChanged;
-            ModConfig.LocalGridColor.SettingChanged += OnColorSettingChanged;
+            ModConfig.Build.WorldGridColor.SettingChanged += OnColorSettingChanged;
+            ModConfig.Build.LocalGridColor.SettingChanged += OnColorSettingChanged;
 
-            IReadOnlyList<ConfigEntry<Color>> hudColors = ThemeColorConfig.AllHudColors;
+            // the axis and nudge rows on the precision panel take their colors from the gizmo rings and arrows
+            IReadOnlyList<ConfigEntry<Color>> gizmoColors = ModConfig.Build.GizmoColors;
+            for (int index = 0; index < gizmoColors.Count; index++)
+            {
+                gizmoColors[index].SettingChanged += OnColorSettingChanged;
+            }
+
+            IReadOnlyList<ConfigEntry<Color>> hudColors = ModConfig.HudColors.All;
             for (int index = 0; index < hudColors.Count; index++)
             {
                 hudColors[index].SettingChanged += OnColorSettingChanged;
@@ -76,10 +88,16 @@ namespace MasterBuilderHeeler.Core.UI
 
         public static void Cleanup()
         {
-            ModConfig.WorldGridColor.SettingChanged -= OnColorSettingChanged;
-            ModConfig.LocalGridColor.SettingChanged -= OnColorSettingChanged;
+            ModConfig.Build.WorldGridColor.SettingChanged -= OnColorSettingChanged;
+            ModConfig.Build.LocalGridColor.SettingChanged -= OnColorSettingChanged;
 
-            IReadOnlyList<ConfigEntry<Color>> hudColors = ThemeColorConfig.AllHudColors;
+            IReadOnlyList<ConfigEntry<Color>> gizmoColors = ModConfig.Build.GizmoColors;
+            for (int index = 0; index < gizmoColors.Count; index++)
+            {
+                gizmoColors[index].SettingChanged -= OnColorSettingChanged;
+            }
+
+            IReadOnlyList<ConfigEntry<Color>> hudColors = ModConfig.HudColors.All;
             for (int index = 0; index < hudColors.Count; index++)
             {
                 hudColors[index].SettingChanged -= OnColorSettingChanged;
@@ -88,36 +106,39 @@ namespace MasterBuilderHeeler.Core.UI
 
         public static void RebuildThemeStrings()
         {
-            HeaderColor = ThemeColorConfig.HudHeaderColor.Value;
-            LabelColor = ThemeColorConfig.HudLabelColor.Value;
-            PrimaryValueColor = ThemeColorConfig.HudPrimaryValueColor.Value;
-            SecondaryValueColor = ThemeColorConfig.HudSecondaryValueColor.Value;
+            HeaderColor = ModConfig.HudColors.HudHeaderColor.Value;
+            LabelColor = ModConfig.HudColors.HudLabelColor.Value;
+            PrimaryValueColor = ModConfig.HudColors.HudPrimaryValueColor.Value;
+            SecondaryValueColor = ModConfig.HudColors.HudSecondaryValueColor.Value;
 
-            string worldGridHex = ToHex(ModConfig.WorldGridColor.Value);
-            string localGridHex = ToHex(ModConfig.LocalGridColor.Value);
-            string bracketHex = ToHex(ThemeColorConfig.HudBracketColor.Value);
-            string statusOnHex = ToHex(ThemeColorConfig.HudStatusOnColor.Value);
-            string statusOffHex = ToHex(ThemeColorConfig.HudStatusOffColor.Value);
-            string buildCameraOnHex = ToHex(ThemeColorConfig.HudBuildCameraOnColor.Value);
-            string ghostFreezeOnHex = ToHex(ThemeColorConfig.HudGhostFreezeOnColor.Value);
-            string activeFrameHex = ToHex(ThemeColorConfig.HudActiveFrameColor.Value);
+            string worldGridHex = ToHex(ModConfig.Build.WorldGridColor.Value);
+            string localGridHex = ToHex(ModConfig.Build.LocalGridColor.Value);
+            string bracketHex = ToHex(ModConfig.HudColors.HudBracketColor.Value);
+            string statusOnHex = ToHex(ModConfig.HudColors.HudStatusOnColor.Value);
+            string statusOffHex = ToHex(ModConfig.HudColors.HudStatusOffColor.Value);
+            string buildCameraOnHex = ToHex(ModConfig.HudColors.HudBuildCameraOnColor.Value);
+            string ghostFreezeOnHex = ToHex(ModConfig.HudColors.HudGhostFreezeOnColor.Value);
+            string activeFrameHex = ToHex(ModConfig.HudColors.HudActiveFrameColor.Value);
 
             SecondaryValueHex = ToHex(SecondaryValueColor);
-            MaxHealthHex = ToHex(ThemeColorConfig.HudMaxHealthColor.Value);
-            AxisPitchHex = ToHex(ThemeColorConfig.HudAxisPitchColor.Value);
-            AxisYawHex = ToHex(ThemeColorConfig.HudAxisYawColor.Value);
-            AxisRollHex = ToHex(ThemeColorConfig.HudAxisRollColor.Value);
-            StepUltraFineHex = ToHex(ThemeColorConfig.HudUltraFineStepColor.Value);
-            StepExtraFineHex = ToHex(ThemeColorConfig.HudExtraFineStepColor.Value);
-            StepFineHex = ToHex(ThemeColorConfig.HudFineStepColor.Value);
-            StepStandardHex = ToHex(ThemeColorConfig.HudStandardStepColor.Value);
-            StepCoarseHex = ToHex(ThemeColorConfig.HudCoarseStepColor.Value);
-            StepCustomHex = ToHex(ThemeColorConfig.HudCustomStepColor.Value);
+            MaxHealthHex = ToHex(ModConfig.HudColors.HudMaxHealthColor.Value);
+            AxisPitchHex = ToHex(ModConfig.Build.GizmoPitchRingColor.Value);
+            AxisYawHex = ToHex(ModConfig.Build.GizmoYawRingColor.Value);
+            AxisRollHex = ToHex(ModConfig.Build.GizmoRollRingColor.Value);
+            ArrowRightHex = ToHex(ModConfig.Build.GizmoRightArrowColor.Value);
+            ArrowUpHex = ToHex(ModConfig.Build.GizmoUpArrowColor.Value);
+            ArrowForwardHex = ToHex(ModConfig.Build.GizmoForwardArrowColor.Value);
+            StepUltraFineHex = ToHex(ModConfig.HudColors.HudUltraFineStepColor.Value);
+            StepExtraFineHex = ToHex(ModConfig.HudColors.HudExtraFineStepColor.Value);
+            StepFineHex = ToHex(ModConfig.HudColors.HudFineStepColor.Value);
+            StepStandardHex = ToHex(ModConfig.HudColors.HudStandardStepColor.Value);
+            StepCoarseHex = ToHex(ModConfig.HudColors.HudCoarseStepColor.Value);
+            StepCustomHex = ToHex(ModConfig.HudColors.HudCustomStepColor.Value);
 
-            Color lowColor = ThemeColorConfig.HudCriticalLowColor.Value;
-            Color midColor = ThemeColorConfig.HudWarningMidColor.Value;
-            HealthPercentGradient = CreatePercentGradient(lowColor, midColor, ThemeColorConfig.HudHealthHighColor.Value);
-            StabilityPercentGradient = CreatePercentGradient(lowColor, midColor, ThemeColorConfig.HudStabilityHighColor.Value);
+            Color lowColor = ModConfig.HudColors.HudCriticalLowColor.Value;
+            Color midColor = ModConfig.HudColors.HudWarningMidColor.Value;
+            HealthPercentGradient = CreatePercentGradient(lowColor, midColor, ModConfig.HudColors.HudHealthHighColor.Value);
+            StabilityPercentGradient = CreatePercentGradient(lowColor, midColor, ModConfig.HudColors.HudStabilityHighColor.Value);
 
             _keycapOpen = $"<color={bracketHex}>{HudGlyphs.RawKeycapOpen}</color>";
             _keycapClose = $"<color={bracketHex}>{HudGlyphs.RawKeycapClose}</color>";
@@ -127,17 +148,18 @@ namespace MasterBuilderHeeler.Core.UI
             PipeSeparator = $" <color={bracketHex}>{HudGlyphs.RawPipe}</color> ";
             BrokenBarSeparator = $" <color={bracketHex}>{HudGlyphs.RawBrokenBar}</color> ";
             SlashSeparator = $" <color={bracketHex}>/</color> ";
+            VerticalEllipsisSeparator = $" <color={bracketHex}>{HudGlyphs.RawVerticalEllipsis}</color> ";
 
             StatusOn = $"<color={statusOnHex}><b>{HudGlyphs.ToggleActive} ON</b></color>";
             StatusOff = $"<color={statusOffHex}>{HudGlyphs.ToggleInactive} OFF</color>";
             StatusBuildCameraOn = $"<color={buildCameraOnHex}><b>{HudGlyphs.ToggleActive} ON</b></color>";
             StatusGhostFreezeOn = $"<color={ghostFreezeOnHex}><b>{HudGlyphs.ToggleActive} ON</b></color>";
 
-            StatusRotationLocal = $"<color={activeFrameHex}><b>{HudGlyphs.ToggleActive} Local</b></color>";
-            StatusRotationWorld = $"<color={SecondaryValueHex}>{HudGlyphs.ToggleInactive} World</color>";
-            StatusNudgeLocal = $"<color={SecondaryValueHex}>{HudGlyphs.ToggleInactive} Local</color>";
-            StatusNudgeWorld = $"<color={activeFrameHex}><b>{HudGlyphs.ToggleActive} World</b></color>";
-            StatusGridWorld = $"<color={worldGridHex}>{HudGlyphs.GridOrthogonal} World</color>";
+            StatusRotationLocal = $"<color={activeFrameHex}><b>{HudGlyphs.HouseBuilding} Local</b></color>";
+            StatusRotationWorld = $"<color={SecondaryValueHex}>{HudGlyphs.MirrorBall} World</color>";
+            StatusNudgeLocal = $"<color={SecondaryValueHex}>{HudGlyphs.HouseBuilding} Local</color>";
+            StatusNudgeWorld = $"<color={activeFrameHex}><b>{HudGlyphs.MirrorBall} World</b></color>";
+            StatusGridWorld = $"<color={worldGridHex}>{HudGlyphs.Globe} World</color>";
             StatusGridLocal = $"<color={localGridHex}><b>{HudGlyphs.GridDiagonal} Local</b></color>";
             StatusGridTerrain = $"<color={SecondaryValueHex}>{HudGlyphs.SurfaceTerrain} Terrain</color>";
             StatusGridFlat = $"<color={activeFrameHex}><b>{HudGlyphs.SurfaceFlat} Flat</b></color>";
@@ -171,16 +193,6 @@ namespace MasterBuilderHeeler.Core.UI
 
         public static string Measure(string measureContent) =>
             $"{_measureOpen}{measureContent}{_measureClose}";
-
-        public static string FormatKeycapToggle(
-            string keyContent,
-            bool isActive,
-            string activeColorHex,
-            string activeGlyph,
-            string inactiveGlyph) =>
-            isActive
-                ? $"{Keycap(keyContent)} <color={activeColorHex}><b>{activeGlyph}</b></color>"
-                : $"{Keycap(keyContent)} {inactiveGlyph}";
 
         // the explicit zero sections stop tiny negatives showing up as -0.0 or -0.00. meaningless to everyone but me.
         // the Quantize multipliers below ignore float drift smaller than whats on screen because im weird.

@@ -25,13 +25,13 @@ namespace MasterBuilderHeeler.Core.UI
             _globalInfoPanel = new GlobalInfoPanel(transform);
             _precisionInfoPanel = new PrecisionInfoPanel(transform);
             EnsureInspectionPanels();
-            ModConfig.InfoUpdateInterval.SettingChanged += OnUpdateIntervalChanged;
+            ModConfig.Hud.InfoUpdateInterval.SettingChanged += OnUpdateIntervalChanged;
             _inspectionCoroutine = StartCoroutine(InspectionPollLoop());
         }
 
         private void Update()
         {
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 HideControlPanels();
                 HideInspectionPanels();
@@ -61,11 +61,11 @@ namespace MasterBuilderHeeler.Core.UI
         }
 
         public static void Initialize() =>
-            ModConfig.EnableInfoPanels.SettingChanged += OnEnableInfoPanelsChanged;
+            ModConfig.General.EnableInfoPanels.SettingChanged += OnEnableInfoPanelsChanged;
 
         public static void AttachToHud(Hud hud)
         {
-            if (ModConfig.EnableInfoPanels.Value && hud && !hud.TryGetComponent(out HudManager _))
+            if (ModConfig.General.EnableInfoPanels.Value && hud && !hud.TryGetComponent(out HudManager _))
             {
                 hud.gameObject.AddComponent<HudManager>();
             }
@@ -73,18 +73,18 @@ namespace MasterBuilderHeeler.Core.UI
 
         public static void Cleanup()
         {
-            ModConfig.EnableInfoPanels.SettingChanged -= OnEnableInfoPanelsChanged;
+            ModConfig.General.EnableInfoPanels.SettingChanged -= OnEnableInfoPanelsChanged;
             DestroyInstance();
             HudPanelView.Cleanup();
         }
 
         public static void UpdateNativePieceHealthBar(Hud hud)
         {
-            if (!ModConfig.EnableMod.Value ||
-                !ModConfig.EnableInfoPanels.Value ||
-                !ModConfig.HideNativeCrosshairHealthBar.Value ||
-                !ModConfig.HoverPanelLayout.Show.Value ||
-                !ModConfig.ShowHoverHealth.Value ||
+            if (!ModConfig.General.EnableMod.Value ||
+                !ModConfig.General.EnableInfoPanels.Value ||
+                !ModConfig.Hud.HideNativeCrosshairHealthBar.Value ||
+                !ModConfig.Hud.HoverPanelLayout.Show.Value ||
+                !ModConfig.Hud.ShowHoverHealth.Value ||
                 !hud ||
                 !hud.m_pieceHealthRoot)
             {
@@ -111,7 +111,7 @@ namespace MasterBuilderHeeler.Core.UI
 
         private static void OnEnableInfoPanelsChanged(object sender, EventArgs eventArgs)
         {
-            if (ModConfig.EnableInfoPanels.Value)
+            if (ModConfig.General.EnableInfoPanels.Value)
             {
                 AttachToHud(Hud.instance);
             }
@@ -124,7 +124,7 @@ namespace MasterBuilderHeeler.Core.UI
         private void ReleaseManagedResources()
         {
             enabled = false;
-            ModConfig.InfoUpdateInterval.SettingChanged -= OnUpdateIntervalChanged;
+            ModConfig.Hud.InfoUpdateInterval.SettingChanged -= OnUpdateIntervalChanged;
 
             if (_inspectionCoroutine != null)
             {
@@ -185,7 +185,7 @@ namespace MasterBuilderHeeler.Core.UI
             {
                 yield return _cachedWait;
 
-                if (!ModConfig.EnableMod.Value)
+                if (!ModConfig.General.EnableMod.Value)
                 {
                     HideInspectionPanels();
                     continue;
@@ -239,7 +239,7 @@ namespace MasterBuilderHeeler.Core.UI
 
         private void RebuildWaitInstruction()
         {
-            float interval = Mathf.Max(0.05f, ModConfig.InfoUpdateInterval.Value);
+            float interval = Mathf.Max(0.05f, ModConfig.Hud.InfoUpdateInterval.Value);
             _cachedWait = new WaitForSeconds(interval);
         }
     }

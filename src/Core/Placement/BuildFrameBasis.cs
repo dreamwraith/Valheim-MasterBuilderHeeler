@@ -27,24 +27,15 @@ namespace MasterBuilderHeeler.Core.Placement
                 ? pieceRotation * InverseCornerRoofRotation
                 : pieceRotation;
 
-        public static void ResolveTranslationAxes(
-            Quaternion pieceRotation,
-            out Vector3 rightAxis,
-            out Vector3 upAxis,
-            out Vector3 forwardAxis)
+        public static (Vector3 RightAxis, Vector3 UpAxis, Vector3 ForwardAxis) ResolveTranslationAxes(Quaternion pieceRotation)
         {
             if (BuildStateManager.ActiveTranslationFrame == TranslationFrame.Local)
             {
                 Quaternion localBasis = ResolveGizmoBasis(pieceRotation);
-                rightAxis = localBasis * Vector3.right;
-                upAxis = localBasis * Vector3.up;
-                forwardAxis = localBasis * Vector3.forward;
-                return;
+                return (localBasis * Vector3.right, localBasis * Vector3.up, localBasis * Vector3.forward);
             }
 
-            rightAxis = Vector3.right;
-            upAxis = Vector3.up;
-            forwardAxis = Vector3.forward;
+            return (Vector3.right, Vector3.up, Vector3.forward);
         }
 
         public static Vector3 ZeroAxis(Vector3 angles, RotationAxis axis)

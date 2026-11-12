@@ -46,15 +46,15 @@ namespace MasterBuilderHeeler.Core.State
 
         public static void Initialize()
         {
-            SetPrecisionModeActive(ModConfig.EnablePrecisionModeByDefault.Value);
-            IsRoofModeActive = ModConfig.EnableRoofModeByDefault.Value;
-            GridCellSize = ModConfig.DefaultGridSize.Value;
-            ModConfig.DefaultGridSize.SettingChanged += OnDefaultGridSizeChanged;
+            SetPrecisionModeActive(ModConfig.Build.EnablePrecisionModeByDefault.Value);
+            IsRoofModeActive = ModConfig.Build.EnableRoofModeByDefault.Value;
+            GridCellSize = ModConfig.Build.DefaultGridSize.Value;
+            ModConfig.Build.DefaultGridSize.SettingChanged += OnDefaultGridSizeChanged;
         }
 
         public static void Cleanup()
         {
-            ModConfig.DefaultGridSize.SettingChanged -= OnDefaultGridSizeChanged;
+            ModConfig.Build.DefaultGridSize.SettingChanged -= OnDefaultGridSizeChanged;
         }
 
         public static void EndHammerSession()
@@ -77,14 +77,14 @@ namespace MasterBuilderHeeler.Core.State
             ActiveTranslationFrame = TranslationFrame.Local;
             ResetLatches();
 
-            IsRoofModeActive = ModConfig.EnableRoofModeByDefault.Value;
+            IsRoofModeActive = ModConfig.Build.EnableRoofModeByDefault.Value;
             IsGridSnapActive = false;
             IsGridOverlayVisible = false;
             ActiveGridFrame = GridFrame.World;
             ActiveGridSurface = GridSurface.Terrain;
             LocalGridOrigin = Vector3.zero;
             LocalGridRotation = Quaternion.identity;
-            GridCellSize = ModConfig.DefaultGridSize.Value;
+            GridCellSize = ModConfig.Build.DefaultGridSize.Value;
             StepMultiplier = 1.0f;
         }
 
@@ -178,9 +178,12 @@ namespace MasterBuilderHeeler.Core.State
             HudMessageUtils.ShowTopLeft(IsPrecisionModeActive ? "Precision Mode: ON" : "Precision Mode: OFF");
         }
 
+        // wraps at both ends because gamepad has one button for this and it has to reach every preset
         public static void ShiftStepPreset(int offset)
         {
-            ActiveStepPreset = (StepPreset)Mathf.Clamp((int)ActiveStepPreset + offset, (int)StepPreset.UltraFine, (int)StepPreset.Coarse);
+            int firstPreset = (int)StepPreset.UltraFine;
+            int presetCount = (int)StepPreset.Coarse - firstPreset + 1;
+            ActiveStepPreset = (StepPreset)(firstPreset + (((int)ActiveStepPreset - firstPreset + offset + presetCount) % presetCount));
             if (ModConfig.IsDebugLogging)
             {
                 Plugin.LogDebug($"[BuildStateManager] Step Preset shifted to: {ActiveStepPreset}");
@@ -218,11 +221,11 @@ namespace MasterBuilderHeeler.Core.State
         {
             float baseStep = ActiveStepPreset switch
             {
-                StepPreset.UltraFine => ModConfig.RotationStepUltraFine.Value,
-                StepPreset.ExtraFine => ModConfig.RotationStepExtraFine.Value,
-                StepPreset.Fine => ModConfig.RotationStepFine.Value,
-                StepPreset.Coarse => ModConfig.RotationStepCoarse.Value,
-                _ => ModConfig.RotationStepStandard.Value
+                StepPreset.UltraFine => ModConfig.Build.RotationStepUltraFine.Value,
+                StepPreset.ExtraFine => ModConfig.Build.RotationStepExtraFine.Value,
+                StepPreset.Fine => ModConfig.Build.RotationStepFine.Value,
+                StepPreset.Coarse => ModConfig.Build.RotationStepCoarse.Value,
+                _ => ModConfig.Build.RotationStepStandard.Value
             };
             return baseStep * StepMultiplier;
         }
@@ -231,11 +234,11 @@ namespace MasterBuilderHeeler.Core.State
         {
             float baseStep = ActiveStepPreset switch
             {
-                StepPreset.UltraFine => ModConfig.TranslationStepUltraFine.Value,
-                StepPreset.ExtraFine => ModConfig.TranslationStepExtraFine.Value,
-                StepPreset.Fine => ModConfig.TranslationStepFine.Value,
-                StepPreset.Coarse => ModConfig.TranslationStepCoarse.Value,
-                _ => ModConfig.TranslationStepStandard.Value
+                StepPreset.UltraFine => ModConfig.Build.TranslationStepUltraFine.Value,
+                StepPreset.ExtraFine => ModConfig.Build.TranslationStepExtraFine.Value,
+                StepPreset.Fine => ModConfig.Build.TranslationStepFine.Value,
+                StepPreset.Coarse => ModConfig.Build.TranslationStepCoarse.Value,
+                _ => ModConfig.Build.TranslationStepStandard.Value
             };
             return baseStep * StepMultiplier;
         }
@@ -264,6 +267,20 @@ namespace MasterBuilderHeeler.Core.State
             if (ModConfig.IsDebugLogging)
             {
                 Plugin.LogDebug($"[BuildStateManager] ActiveAxis toggled to {ActiveAxis}.");
+            }
+        }
+
+        public static void CycleAxis()
+        {
+            ActiveAxis = ActiveAxis switch
+            {
+                RotationAxis.Yaw => RotationAxis.Pitch,
+                RotationAxis.Pitch => RotationAxis.Roll,
+                _ => RotationAxis.Yaw
+            };
+            if (ModConfig.IsDebugLogging)
+            {
+                Plugin.LogDebug($"[BuildStateManager] ActiveAxis cycled to {ActiveAxis}.");
             }
         }
 
@@ -378,11 +395,11 @@ namespace MasterBuilderHeeler.Core.State
         }
 
         private static void OnDefaultGridSizeChanged(object sender, EventArgs eventArgs) =>
-            GridCellSize = ModConfig.DefaultGridSize.Value;
+            GridCellSize = ModConfig.Build.DefaultGridSize.Value;
 
         public static void SetPrecisionModeActive(bool active)
         {
-            bool resolvedActive = active && ModConfig.EnablePrecision.Value;
+            bool resolvedActive = active && ModConfig.General.EnablePrecision.Value;
             if (IsPrecisionModeActive == resolvedActive)
             {
                 return;

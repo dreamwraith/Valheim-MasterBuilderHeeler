@@ -21,28 +21,28 @@ namespace MasterBuilderHeeler.Core.Camera
         public static void Initialize()
         {
             Cleanup();
-            ModConfig.EnableCameraLight.SettingChanged += OnRigSettingChanged;
-            ModConfig.CameraLightColor.SettingChanged += OnRigSettingChanged;
-            ModConfig.CameraLightIntensity.SettingChanged += OnRigSettingChanged;
-            ModConfig.CameraLightRange.SettingChanged += OnRigSettingChanged;
-            ModConfig.CameraLightSpotAngle.SettingChanged += OnRigSettingChanged;
-            ModConfig.EnableCameraDemister.SettingChanged += OnRigSettingChanged;
-            ModConfig.RequireWisplightForDemister.SettingChanged += OnRigSettingChanged;
-            ModConfig.CameraDemisterRadius.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.EnableCameraLight.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.CameraLightColor.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.CameraLightIntensity.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.CameraLightRange.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.CameraLightSpotAngle.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.EnableCameraDemister.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.RequireWisplightForDemister.SettingChanged += OnRigSettingChanged;
+            ModConfig.Build.CameraDemisterRadius.SettingChanged += OnRigSettingChanged;
             _settingsDirty = true;
             _nextWisplightCheckTime = 0f;
         }
 
         public static void Cleanup()
         {
-            ModConfig.EnableCameraLight.SettingChanged -= OnRigSettingChanged;
-            ModConfig.CameraLightColor.SettingChanged -= OnRigSettingChanged;
-            ModConfig.CameraLightIntensity.SettingChanged -= OnRigSettingChanged;
-            ModConfig.CameraLightRange.SettingChanged -= OnRigSettingChanged;
-            ModConfig.CameraLightSpotAngle.SettingChanged -= OnRigSettingChanged;
-            ModConfig.EnableCameraDemister.SettingChanged -= OnRigSettingChanged;
-            ModConfig.RequireWisplightForDemister.SettingChanged -= OnRigSettingChanged;
-            ModConfig.CameraDemisterRadius.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.EnableCameraLight.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.CameraLightColor.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.CameraLightIntensity.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.CameraLightRange.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.CameraLightSpotAngle.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.EnableCameraDemister.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.RequireWisplightForDemister.SettingChanged -= OnRigSettingChanged;
+            ModConfig.Build.CameraDemisterRadius.SettingChanged -= OnRigSettingChanged;
             Destroy();
         }
 
@@ -71,19 +71,19 @@ namespace MasterBuilderHeeler.Core.Camera
 
             if (_settingsDirty)
             {
-                _light!.enabled = ModConfig.EnableCameraLight.Value;
-                _light.color = ModConfig.CameraLightColor.Value;
-                _light.intensity = ModConfig.CameraLightIntensity.Value;
-                _light.range = ModConfig.CameraLightRange.Value;
-                _light.spotAngle = ModConfig.CameraLightSpotAngle.Value;
-                _forceField!.endRange = ModConfig.CameraDemisterRadius.Value;
+                _light!.enabled = ModConfig.Build.EnableCameraLight.Value;
+                _light.color = ModConfig.Build.CameraLightColor.Value;
+                _light.intensity = ModConfig.Build.CameraLightIntensity.Value;
+                _light.range = ModConfig.Build.CameraLightRange.Value;
+                _light.spotAngle = ModConfig.Build.CameraLightSpotAngle.Value;
+                _forceField!.endRange = ModConfig.Build.CameraDemisterRadius.Value;
                 _settingsDirty = false;
             }
 
             bool demisterActive = false;
-            if (ModConfig.EnableCameraDemister.Value)
+            if (ModConfig.Build.EnableCameraDemister.Value)
             {
-                if (!ModConfig.RequireWisplightForDemister.Value)
+                if (!ModConfig.Build.RequireWisplightForDemister.Value)
                 {
                     demisterActive = true;
                 }

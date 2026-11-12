@@ -25,7 +25,7 @@ namespace MasterBuilderHeeler.Core.Camera
         public static bool InterceptCameraUpdate(float deltaTime, GameCamera camera, out float previousZoomSensitivity)
         {
             previousZoomSensitivity = camera.m_zoomSens;
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 if (_isInitialized)
                 {
@@ -60,7 +60,7 @@ namespace MasterBuilderHeeler.Core.Camera
 
         public static void OverrideTakeInput(ref bool canTakeInput)
         {
-            if (ModConfig.EnableMod.Value && BuildStateManager.IsBuildCameraActive)
+            if (ModConfig.General.EnableMod.Value && BuildStateManager.IsBuildCameraActive)
             {
                 canTakeInput = false;
             }
@@ -86,7 +86,7 @@ namespace MasterBuilderHeeler.Core.Camera
 
             if (ModConfig.IsInfoLogging)
             {
-                Plugin.LogInfo($"[BuildCameraController] Build Camera activated at position={startPosition}, anchored to player at {anchorPosition} (tether radius: {ModConfig.BuildCameraTetherRadius.Value:F0}m).");
+                Plugin.LogInfo($"[BuildCameraController] Build Camera activated at position={startPosition}, anchored to player at {anchorPosition} (tether radius: {ModConfig.Build.BuildCameraTetherRadius.Value:F0}m).");
             }
         }
 
@@ -107,9 +107,9 @@ namespace MasterBuilderHeeler.Core.Camera
 
             Transform cameraTransform = camera.transform;
             bool isMenuOpen = InputUtils.IsTextInputOrMenuOpen();
-            Vector2 lookDelta = isMenuOpen ? Vector2.zero : ZInput.GetMouseDelta();
+            Vector2 lookDelta = isMenuOpen ? Vector2.zero : InputUtils.GetBuildCameraLookDelta(deltaTime);
             Vector3 moveDirection = isMenuOpen ? Vector3.zero : InputUtils.GetBuildCameraMoveDirection(cameraTransform);
-            bool isSprinting = !isMenuOpen && ZInput.GetButton("Run");
+            bool isSprinting = !isMenuOpen && InputUtils.IsBuildCameraSprintHeld();
 
             Quaternion targetRotation = BuildCameraPhysics.UpdateFlightRotation(lookDelta, deltaTime);
             Vector3 currentPosition = cameraTransform.position;
@@ -126,7 +126,7 @@ namespace MasterBuilderHeeler.Core.Camera
 
         private static Vector3 ClampToAvatarTether(Vector3 position, Vector3 anchorPosition)
         {
-            float maxRadius = ModConfig.BuildCameraTetherRadius.Value;
+            float maxRadius = ModConfig.Build.BuildCameraTetherRadius.Value;
             Vector3 offset = position - anchorPosition;
 
             if (offset.sqrMagnitude > maxRadius * maxRadius)

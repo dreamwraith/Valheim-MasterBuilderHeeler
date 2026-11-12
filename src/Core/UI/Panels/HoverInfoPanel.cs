@@ -19,7 +19,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
         private bool _hasValidSnapshot;
 
         public HoverInfoPanel(Transform crosshairTransform)
-            : base(crosshairTransform, "MBH_HoverInfoPanel", ModConfig.HoverPanelLayout)
+            : base(crosshairTransform, "MBH_HoverInfoPanel", ModConfig.Hud.HoverPanelLayout)
         {
             _nameRow = Panel.AddRow($"Piece {HudGlyphs.ToggleActive}:", isSecondaryValue: true);
             _healthRow = Panel.AddRow($"Health {HudGlyphs.Heart}:");
@@ -35,17 +35,17 @@ namespace MasterBuilderHeeler.Core.UI.Panels
 
         public void Refresh(Player localPlayer)
         {
-            bool showName = ModConfig.ShowHoverName.Value;
-            bool showPrefab = ModConfig.ShowHoverPrefab.Value;
-            bool showHealth = ModConfig.ShowHoverHealth.Value;
-            bool showSupport = ModConfig.ShowHoverSupport.Value;
-            bool showRotation = ModConfig.ShowHoverEuler.Value;
-            bool showQuaternion = ModConfig.ShowHoverQuaternion.Value;
+            bool showName = ModConfig.Hud.ShowHoverName.Value;
+            bool showPrefab = ModConfig.Hud.ShowHoverPrefab.Value;
+            bool showHealth = ModConfig.Hud.ShowHoverHealth.Value;
+            bool showSupport = ModConfig.Hud.ShowHoverSupport.Value;
+            bool showRotation = ModConfig.Hud.ShowHoverEuler.Value;
+            bool showQuaternion = ModConfig.Hud.ShowHoverQuaternion.Value;
             bool hasAnyRow = showName || showPrefab || showHealth || showSupport || showRotation || showQuaternion;
 
-            if (!ModConfig.HoverPanelLayout.Show.Value ||
+            if (!ModConfig.Hud.HoverPanelLayout.Show.Value ||
                 !hasAnyRow ||
-                (ModConfig.RequireHammerForHoverInspection.Value && !localPlayer.InPlaceMode()))
+                (ModConfig.General.RequireHammerForHoverInspection.Value && !localPlayer.InPlaceMode()))
             {
                 SetActive(false);
                 return;
@@ -184,22 +184,22 @@ namespace MasterBuilderHeeler.Core.UI.Panels
 
         private void SubscribeFieldEvents()
         {
-            ModConfig.ShowHoverName.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowHoverPrefab.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowHoverHealth.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowHoverSupport.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowHoverEuler.SettingChanged += OnFieldVisibilityChanged;
-            ModConfig.ShowHoverQuaternion.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverName.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverPrefab.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverHealth.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverSupport.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverEuler.SettingChanged += OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverQuaternion.SettingChanged += OnFieldVisibilityChanged;
         }
 
         private void UnsubscribeFieldEvents()
         {
-            ModConfig.ShowHoverName.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowHoverPrefab.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowHoverHealth.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowHoverSupport.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowHoverEuler.SettingChanged -= OnFieldVisibilityChanged;
-            ModConfig.ShowHoverQuaternion.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverName.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverPrefab.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverHealth.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverSupport.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverEuler.SettingChanged -= OnFieldVisibilityChanged;
+            ModConfig.Hud.ShowHoverQuaternion.SettingChanged -= OnFieldVisibilityChanged;
         }
 
         private void OnFieldVisibilityChanged(object sender, EventArgs eventArgs)

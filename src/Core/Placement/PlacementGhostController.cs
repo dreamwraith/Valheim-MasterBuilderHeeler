@@ -1,9 +1,11 @@
 using System;
 using MasterBuilderHeeler.Configuration;
 using MasterBuilderHeeler.Core.Camera;
+using MasterBuilderHeeler.Core.Input;
 using MasterBuilderHeeler.Core.Rotation;
 using MasterBuilderHeeler.Core.State;
 using MasterBuilderHeeler.Core.Translation;
+using MasterBuilderHeeler.Core.UI.Radial;
 using MasterBuilderHeeler.Core.Validation;
 using MasterBuilderHeeler.Core.Visuals.Gizmo;
 using MasterBuilderHeeler.Core.Visuals.Grid;
@@ -20,26 +22,26 @@ namespace MasterBuilderHeeler.Core.Placement
         public static void Initialize()
         {
             Cleanup();
-            ModConfig.EnableMod.SettingChanged += OnFeatureAvailabilityChanged;
-            ModConfig.EnablePrecision.SettingChanged += OnFeatureAvailabilityChanged;
-            ModConfig.EnableBuildCamera.SettingChanged += OnFeatureAvailabilityChanged;
-            ModConfig.EnableGrid.SettingChanged += OnFeatureAvailabilityChanged;
+            ModConfig.General.EnableMod.SettingChanged += OnFeatureAvailabilityChanged;
+            ModConfig.General.EnablePrecision.SettingChanged += OnFeatureAvailabilityChanged;
+            ModConfig.General.EnableBuildCamera.SettingChanged += OnFeatureAvailabilityChanged;
+            ModConfig.General.EnableGrid.SettingChanged += OnFeatureAvailabilityChanged;
         }
 
         public static void Cleanup()
         {
             _activePieceTableInstanceId = 0;
             _lastSelectedPrefabInstanceId = 0;
-            ModConfig.EnableMod.SettingChanged -= OnFeatureAvailabilityChanged;
-            ModConfig.EnablePrecision.SettingChanged -= OnFeatureAvailabilityChanged;
-            ModConfig.EnableBuildCamera.SettingChanged -= OnFeatureAvailabilityChanged;
-            ModConfig.EnableGrid.SettingChanged -= OnFeatureAvailabilityChanged;
+            ModConfig.General.EnableMod.SettingChanged -= OnFeatureAvailabilityChanged;
+            ModConfig.General.EnablePrecision.SettingChanged -= OnFeatureAvailabilityChanged;
+            ModConfig.General.EnableBuildCamera.SettingChanged -= OnFeatureAvailabilityChanged;
+            ModConfig.General.EnableGrid.SettingChanged -= OnFeatureAvailabilityChanged;
         }
 
         public static void ResetBuildSession()
         {
             EndHammerSession();
-            BuildStateManager.SetPrecisionModeActive(ModConfig.EnablePrecisionModeByDefault.Value);
+            BuildStateManager.SetPrecisionModeActive(ModConfig.Build.EnablePrecisionModeByDefault.Value);
             BuildStateManager.ResetBuildSettings();
             PieceRotationEngine.ResetAllRotators();
         }
@@ -68,12 +70,12 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static void UpdateSessionLifecycle(Player player)
         {
-            if (!ModConfig.EnableMod.Value || player != Player.m_localPlayer)
+            if (!ModConfig.General.EnableMod.Value || player != Player.m_localPlayer)
             {
                 return;
             }
 
-            // death only ends the session here, the full reset comes when the game destroys the dead player for respawn
+            // death only ends the session here. the full reset comes when the game destroys the dead player for respawn
             if (player.IsDead() || player.IsTeleporting() || !player.InPlaceMode())
             {
                 if (BuildStateManager.IsHammerSessionActive)
@@ -194,9 +196,9 @@ namespace MasterBuilderHeeler.Core.Placement
                 prefabName);
         }
 
-        public static void SuppressPlacementInputIfEditing(ref bool takeInput)
+        public static void SuppressPlacementInput(ref bool takeInput)
         {
-            if (!ModConfig.EnableMod.Value || BuildStateManager.EditState != PlacementEditState.InPlaceEdit)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 return;
             }
@@ -204,12 +206,16 @@ namespace MasterBuilderHeeler.Core.Placement
             // Yep, OK, well at least i figured it out before redseiko yelled at me. turns out my fix WAS stupid
             // and i was copying the wrong bit of base game code. instead i just need to override takeInput to false.
             // this also fixes the bug I missed where you could literally place a piece while in edit mode... fml.
-            takeInput = false;
+            // the gamepad layer and the build radial reuse the place, remove and rotate buttons, so same deal for those
+            if (BuildStateManager.EditState == PlacementEditState.InPlaceEdit || GamepadChordLayer.IsHeld || BuildRadialMenu.IsOpen)
+            {
+                takeInput = false;
+            }
         }
 
         public static void OnSelectedPieceChanging(Player player, Vector2Int pieceIndex)
         {
-            if (ModConfig.EnableMod.Value &&
+            if (ModConfig.General.EnableMod.Value &&
                 player.m_buildPieces &&
                 player.m_buildPieces.GetSelectedIndex() != pieceIndex)
             {
@@ -219,7 +225,7 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static void OnPiecePlaced()
         {
-            if (ModConfig.EnableMod.Value)
+            if (ModConfig.General.EnableMod.Value)
             {
                 UnfreezeGhost();
             }
@@ -235,7 +241,7 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static void BeforeSetupPlacementGhost(Player player)
         {
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 return;
             }
@@ -266,7 +272,7 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static void AfterSetupPlacementGhost(Player player)
         {
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 return;
             }
@@ -291,7 +297,7 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static bool TryOverridePlacementGhost(Player player, bool flashGuardStone)
         {
-            if (!ModConfig.EnableMod.Value)
+            if (!ModConfig.General.EnableMod.Value)
             {
                 return true;
             }
@@ -334,7 +340,7 @@ namespace MasterBuilderHeeler.Core.Placement
 
         public static void ApplyPrecisionGhostOffset(Player player, bool flashGuardStone)
         {
-            if (!ModConfig.EnableMod.Value ||
+            if (!ModConfig.General.EnableMod.Value ||
                 BuildStateManager.EditState != PlacementEditState.Normal ||
                 !player.m_placementGhost ||
                 !player.m_placementGhost.activeSelf)
@@ -384,7 +390,7 @@ namespace MasterBuilderHeeler.Core.Placement
         private static void OnFeatureAvailabilityChanged(object sender, EventArgs eventArgs)
         {
             ResetBuildSession();
-            if (!ModConfig.EnableGrid.Value)
+            if (!ModConfig.General.EnableGrid.Value)
             {
                 GridOverlayRenderer.Cleanup();
             }

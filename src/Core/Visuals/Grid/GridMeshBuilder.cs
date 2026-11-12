@@ -1,11 +1,13 @@
-using System;
 using System.Collections.Generic;
+using MasterBuilderHeeler.Configuration;
 using MasterBuilderHeeler.Core.State;
 using UnityEngine;
 
 namespace MasterBuilderHeeler.Core.Visuals.Grid
 {
-    internal sealed class GridMeshBuilder
+    // walks the grid lines and hands each point to the style builder. the style only decides what a point and a
+    // segment turn into and everything else about the grid lives here
+    internal abstract class GridMeshBuilder
     {
         private const float InnerFadeFraction = 0.65f;
         private const float MaxTerrainSampleSpacing = 1.0f;
@@ -15,45 +17,95 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
 
         private readonly List<Vector3> _vertices = new List<Vector3>(2048);
         private readonly List<Color32> _colors = new List<Color32>(2048);
-        private readonly List<int> _indices = new List<int>(4096);
+        private readonly GridTerrainSampler _terrainSampler = new GridTerrainSampler();
 
-        private Heightmap? _cachedHeightmap;
-        private float[] _sampleHeights = Array.Empty<float>();
-        private int[] _sampleStamps = Array.Empty<int>();
-        private int _currentSampleStamp;
+        public abstract GridStyle Style { get; }
 
-        public bool HasGeometry => _indices.Count > 0;
+        public bool HasGeometry => Indices.Count > 0;
+
+        protected abstract MeshTopology Topology { get; }
+
+        protected List<int> Indices { get; } = new List<int>(4096);
+
+        public static GridMeshBuilder Create(GridStyle style) => style switch
+        {
+            GridStyle.Ribbon => new RibbonGridMeshBuilder(),
+            _ => new WireframeGridMeshBuilder()
+        };
 
         public void RebuildPlaneMesh(Mesh mesh, in GridBuildSpec buildSpec)
         {
             _vertices.Clear();
             _colors.Clear();
-            _indices.Clear();
+            Indices.Clear();
 
             EmitPlaneLines(in buildSpec);
-            // clear after every rebuild so unloaded zones dont stay referenced
-            _cachedHeightmap = null;
+            _terrainSampler.Clear();
 
             mesh.Clear();
             if (_vertices.Count > 0)
             {
                 mesh.SetVertices(_vertices);
                 mesh.SetColors(_colors);
-                mesh.SetIndices(_indices, MeshTopology.Lines, 0);
+                mesh.SetIndices(Indices, Topology, 0);
                 mesh.RecalculateBounds();
             }
         }
 
-        private static Color ResolveLineHierarchyColor(Color baseColor, bool isOriginAxis, bool isMajorLine)
+        protected static Vector3 LocalPoint(in GridLine line, float deltaParallel, float sideOffset, float height)
         {
-            if (isOriginAxis)
+            float localPerpendicular = line.LocalPerpendicular + sideOffset;
+            float localParallel = line.CenterParallel + deltaParallel;
+            return line.AlongZ
+                ? new Vector3(localPerpendicular, height, localParallel)
+                : new Vector3(localParallel, height, localPerpendicular);
+        }
+
+        // the same point in the world. y still has to come from the terrain
+        protected static Vector3 WorldPoint(in GridBuildSpec buildSpec, in GridLine line, float deltaParallel, float sideOffset) =>
+            buildSpec.Origin + (buildSpec.Rotation * LocalPoint(in line, deltaParallel, sideOffset, 0f));
+
+        // one point of a flat line in the grids local space
+        protected abstract void AddFlatPoint(in GridMeshContext context, in GridLine line, float deltaParallel, Color32 color);
+
+        // one point of a terrain line in world space
+        protected abstract void AddTerrainPoint(in GridMeshContext context, in GridLine line, int sampleOffset, Color32 color);
+
+        protected abstract void AddSegments(int firstVertex, int segmentCount);
+
+        protected virtual void OnBuildStarted(in GridMeshContext context)
+        {
+        }
+
+        protected void AddVertex(Vector3 position, Color32 color)
+        {
+            _vertices.Add(position);
+            _colors.Add(color);
+        }
+
+        protected float SampleTerrainY(in GridBuildSpec buildSpec, Vector3 worldPoint) =>
+            _terrainSampler.SampleGroundHeight(worldPoint.x, worldPoint.z, buildSpec.Origin.y) + buildSpec.HeightOffset;
+
+        private static GridLineClass ResolveLineClass(int gridCell)
+        {
+            if (gridCell == 0)
+            {
+                return GridLineClass.Origin;
+            }
+
+            return gridCell % MajorLineInterval == 0 ? GridLineClass.Major : GridLineClass.Minor;
+        }
+
+        private static Color ResolveLineColor(Color baseColor, GridLineClass lineClass)
+        {
+            if (lineClass == GridLineClass.Origin)
             {
                 Color originColor = Color.Lerp(baseColor, Color.white, 0.35f);
                 originColor.a = Mathf.Clamp01(baseColor.a * 1.15f);
                 return originColor;
             }
 
-            if (isMajorLine)
+            if (lineClass == GridLineClass.Major)
             {
                 Color majorColor = Color.Lerp(baseColor, Color.white, 0.18f);
                 majorColor.a = baseColor.a;
@@ -64,6 +116,13 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             minorColor.a = baseColor.a * 0.55f;
             return minorColor;
         }
+
+        private static float ResolveLineWidth(GridLineWidths lineWidths, GridLineClass lineClass) => lineClass switch
+        {
+            GridLineClass.Origin => lineWidths.Origin,
+            GridLineClass.Major => lineWidths.Major,
+            _ => lineWidths.Minor
+        };
 
         private static Color32 ApplyRadialFade(
             in GridMeshContext context,
@@ -95,224 +154,144 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             GridMeshContext context = new GridMeshContext(in buildSpec);
             if (buildSpec.FollowTerrain)
             {
-                PrepareTerrainSampleCache(context.GridSide * context.GridSide);
+                _terrainSampler.Prepare(buildSpec.FocusWorldPosition, context.SampleReach);
             }
 
+            OnBuildStarted(in context);
+
+            // minor lines go in first and origin lines last, so where two lines cross the bigger one is drawn on top
+            EmitLineClass(in context, GridLineClass.Minor);
+            EmitLineClass(in context, GridLineClass.Major);
+            EmitLineClass(in context, GridLineClass.Origin);
+        }
+
+        private void EmitLineClass(in GridMeshContext context, GridLineClass lineClass)
+        {
             for (int lineOffset = -context.HalfLineCount; lineOffset <= context.HalfLineCount; lineOffset++)
             {
-                float deltaPerpendicular = lineOffset * buildSpec.Step;
-                float perpendicularSquared = deltaPerpendicular * deltaPerpendicular;
-                if (perpendicularSquared >= context.RadiusSquared)
+                float deltaPerpendicular = lineOffset * context.BuildSpec.Step;
+                if (deltaPerpendicular * deltaPerpendicular >= context.RadiusSquared)
                 {
                     continue;
                 }
 
-                EmitGridLine(in context, alongZ: true, lineOffset, deltaPerpendicular, perpendicularSquared);
-                EmitGridLine(in context, alongZ: false, lineOffset, deltaPerpendicular, perpendicularSquared);
+                EmitGridLine(in context, lineClass, alongZ: true, lineOffset, deltaPerpendicular);
+                EmitGridLine(in context, lineClass, alongZ: false, lineOffset, deltaPerpendicular);
             }
         }
 
         private void EmitGridLine(
             in GridMeshContext context,
+            GridLineClass lineClass,
             bool alongZ,
             int lineOffset,
-            float deltaPerpendicular,
-            float perpendicularSquared)
+            float deltaPerpendicular)
         {
             ref readonly GridBuildSpec buildSpec = ref context.BuildSpec;
             int gridCell = (alongZ ? buildSpec.FocusCellX : buildSpec.FocusCellZ) + lineOffset;
-            float localPerpendicular = (alongZ ? context.CenterLocalX : context.CenterLocalZ) + deltaPerpendicular;
-            float centerParallel = alongZ ? context.CenterLocalZ : context.CenterLocalX;
-
-            Color lineColor = ResolveLineHierarchyColor(buildSpec.BaseColor, gridCell == 0, gridCell % MajorLineInterval == 0);
-            int firstVertex = _vertices.Count;
-
-            if (buildSpec.FollowTerrain)
+            if (ResolveLineClass(gridCell) != lineClass)
             {
-                int halfSamples = Mathf.Min(
-                    context.MaxHalfSamples,
-                    Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(context.RadiusSquared - perpendicularSquared) / context.SampleStep)));
-                int lineSampleOffset = lineOffset * context.SubdivisionsPerCell;
-
-                for (int sampleOffset = -halfSamples; sampleOffset <= halfSamples; sampleOffset++)
-                {
-                    float deltaParallel = sampleOffset * context.SampleStep;
-                    float localParallel = centerParallel + deltaParallel;
-                    float localX = alongZ ? localPerpendicular : localParallel;
-                    float localZ = alongZ ? localParallel : localPerpendicular;
-
-                    Vector3 worldPoint = buildSpec.Origin + (buildSpec.Rotation * new Vector3(localX, 0f, localZ));
-                    int sampleX = (alongZ ? lineSampleOffset : sampleOffset) + context.MaxHalfSamples;
-                    int sampleZ = (alongZ ? sampleOffset : lineSampleOffset) + context.MaxHalfSamples;
-                    worldPoint.y = GetOrSampleTerrainY((sampleX * context.GridSide) + sampleZ, worldPoint.x, worldPoint.z, buildSpec.Origin.y, buildSpec.HeightOffset);
-
-                    _vertices.Add(worldPoint);
-                    _colors.Add(ApplyRadialFade(in context, lineColor, deltaPerpendicular, deltaParallel));
-                }
-
-                AppendPolylineIndices(firstVertex, 2 * halfSamples);
                 return;
             }
 
+            GridLine line = new GridLine(
+                alongZ,
+                lineOffset,
+                deltaPerpendicular,
+                (alongZ ? context.CenterLocalX : context.CenterLocalZ) + deltaPerpendicular,
+                alongZ ? context.CenterLocalZ : context.CenterLocalX,
+                ResolveLineColor(buildSpec.BaseColor, lineClass),
+                0.5f * ResolveLineWidth(buildSpec.LineWidths, lineClass));
+
+            if (buildSpec.FollowTerrain)
+            {
+                EmitTerrainLine(in context, in line);
+            }
+            else
+            {
+                EmitFlatLine(in context, in line);
+            }
+        }
+
+        private void EmitTerrainLine(in GridMeshContext context, in GridLine line)
+        {
+            float perpendicularSquared = line.DeltaPerpendicular * line.DeltaPerpendicular;
+            int halfSamples = Mathf.Min(
+                context.MaxHalfSamples,
+                Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(context.RadiusSquared - perpendicularSquared) / context.SampleStep)));
+            int firstVertex = _vertices.Count;
+
+            for (int sampleOffset = -halfSamples; sampleOffset <= halfSamples; sampleOffset++)
+            {
+                Color32 color = ApplyRadialFade(in context, line.Color, line.DeltaPerpendicular, sampleOffset * context.SampleStep);
+                AddTerrainPoint(in context, in line, sampleOffset, color);
+            }
+
+            AddSegments(firstVertex, 2 * halfSamples);
+        }
+
+        private void EmitFlatLine(in GridMeshContext context, in GridLine line)
+        {
+            float perpendicularSquared = line.DeltaPerpendicular * line.DeltaPerpendicular;
             float outerExtent = Mathf.Sqrt(context.RadiusSquared - perpendicularSquared);
+            int firstVertex = _vertices.Count;
+
             if (perpendicularSquared < context.InnerRadiusSquared)
             {
                 // grid fades out toward the edge and alpha only exists on vertices, the gpu blends between them
                 // this line crosses the solid middle so only the two faded ends need extra vertices. the middle is one
                 // long segment, thats the + 1. fancy grid rendering math go zooooooom
                 float innerExtent = Mathf.Sqrt(context.InnerRadiusSquared - perpendicularSquared);
-                AppendSegment(in context, alongZ, localPerpendicular, centerParallel, deltaPerpendicular, -outerExtent, -innerExtent, FlatFadeSegments, lineColor);
-                AppendSegment(in context, alongZ, localPerpendicular, centerParallel, deltaPerpendicular, innerExtent, outerExtent, FlatFadeSegments, lineColor);
-                AppendPolylineIndices(firstVertex, (2 * FlatFadeSegments) + 1);
+                AddFlatPoints(in context, in line, -outerExtent, -innerExtent, FlatFadeSegments);
+                AddFlatPoints(in context, in line, innerExtent, outerExtent, FlatFadeSegments);
+                AddSegments(firstVertex, (2 * FlatFadeSegments) + 1);
                 return;
             }
 
             // this line never reaches the solid middle, both ends are on the edge at zero alpha
             // two vertices would blend 0 to 0 and it would never show up, so add some in between to give it alpha. or dont, idc, im not your mom.
-            AppendSegment(in context, alongZ, localPerpendicular, centerParallel, deltaPerpendicular, -outerExtent, outerExtent, FlatOuterChordSegments, lineColor);
-            AppendPolylineIndices(firstVertex, FlatOuterChordSegments);
+            AddFlatPoints(in context, in line, -outerExtent, outerExtent, FlatOuterChordSegments);
+            AddSegments(firstVertex, FlatOuterChordSegments);
         }
 
-        private void AppendSegment(
+        private void AddFlatPoints(
             in GridMeshContext context,
-            bool alongZ,
-            float localPerpendicular,
-            float centerParallel,
-            float deltaPerpendicular,
+            in GridLine line,
             float startDelta,
             float endDelta,
-            int segmentCount,
-            Color lineColor)
+            int segmentCount)
         {
             for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
             {
                 float deltaParallel = Mathf.Lerp(startDelta, endDelta, segmentIndex / (float)segmentCount);
-                float localParallel = centerParallel + deltaParallel;
-                float localX = alongZ ? localPerpendicular : localParallel;
-                float localZ = alongZ ? localParallel : localPerpendicular;
-                _vertices.Add(new Vector3(localX, context.BuildSpec.HeightOffset, localZ));
-                _colors.Add(ApplyRadialFade(in context, lineColor, deltaPerpendicular, deltaParallel));
+                Color32 color = ApplyRadialFade(in context, line.Color, line.DeltaPerpendicular, deltaParallel);
+                AddFlatPoint(in context, in line, deltaParallel, color);
             }
         }
 
-        // bump the stamp each rebuild so shared x/z intersections only sample the heightmap once, no clearing the
-        // whole cache array every time the grid moves. when i didnt do this the cpu went zoomies.
-        private void PrepareTerrainSampleCache(int requiredCount)
+        protected enum GridLineClass
         {
-            if (_sampleHeights.Length < requiredCount)
-            {
-                _sampleHeights = new float[requiredCount];
-                _sampleStamps = new int[requiredCount];
-            }
-
-            if (_currentSampleStamp == int.MaxValue)
-            {
-                Array.Clear(_sampleStamps, 0, _sampleStamps.Length);
-                _currentSampleStamp = 0;
-            }
-
-            _currentSampleStamp++;
+            Minor,
+            Major,
+            Origin
         }
 
-        private float GetOrSampleTerrainY(int cacheIndex, float worldX, float worldZ, float fallbackHeight, float heightOffset)
+        // line widths in meters. only the ribbon style draws them
+        internal record struct GridLineWidths(float Minor, float Major, float Origin)
         {
-            if (_sampleStamps[cacheIndex] == _currentSampleStamp)
-            {
-                return _sampleHeights[cacheIndex];
-            }
-
-            float terrainY = SampleGroundHeight(worldX, worldZ, fallbackHeight) + heightOffset;
-            _sampleStamps[cacheIndex] = _currentSampleStamp;
-            _sampleHeights[cacheIndex] = terrainY;
-            return terrainY;
-        }
-
-        private float SampleGroundHeight(float worldX, float worldZ, float fallbackHeight)
-        {
-            Vector3 worldPosition = new Vector3(worldX, fallbackHeight, worldZ);
-            if (TrySampleHeightmapBilinear(worldPosition, out float interpolatedHeight))
-            {
-                return interpolatedHeight;
-            }
-
-            ZoneSystem zoneSystem = ZoneSystem.instance;
-            if (zoneSystem && zoneSystem.GetGroundHeight(worldPosition, out float groundHeight))
-            {
-                return groundHeight;
-            }
-
-            return fallbackHeight;
-        }
-
-        // this used to be a simple physx terrain lookup. dumb idea, it cost 10-15 fps even on my 4090+9800x3d lmao
-        // bilinear heightmap sampling gets rid of almost all of that and let the max radius double
-        // all at the low low cost of a bunch more fucking code. sigh.
-        private bool TrySampleHeightmapBilinear(Vector3 worldPosition, out float groundHeight)
-        {
-            Heightmap? heightmap = _cachedHeightmap;
-            if (!heightmap || !heightmap.IsPointInside(worldPosition))
-            {
-                heightmap = Heightmap.FindHeightmap(worldPosition);
-                _cachedHeightmap = heightmap;
-            }
-
-            if (!heightmap)
-            {
-                groundHeight = 0f;
-                return false;
-            }
-
-            int width = heightmap.m_width;
-            int stride = width + 1;
-            List<float> heights = heightmap.m_heights;
-            if (width <= 0 || heights.Count < stride * stride)
-            {
-                groundHeight = 0f;
-                return false;
-            }
-
-            Vector3 heightmapOrigin = heightmap.transform.position;
-            float scale = heightmap.m_scale;
-            float halfSize = width * scale * 0.5f;
-            float clampedX = Mathf.Clamp(((worldPosition.x - heightmapOrigin.x) + halfSize) / scale, 0f, width);
-            float clampedZ = Mathf.Clamp(((worldPosition.z - heightmapOrigin.z) + halfSize) / scale, 0f, width);
-
-            int cellColumn = Mathf.Min(Mathf.FloorToInt(clampedX), width - 1);
-            int cellRow = Mathf.Min(Mathf.FloorToInt(clampedZ), width - 1);
-            float interpolationX = clampedX - cellColumn;
-            float interpolationZ = clampedZ - cellRow;
-
-            int southRowOffset = cellRow * stride;
-            int northRowOffset = southRowOffset + stride;
-            float southWestHeight = heights[southRowOffset + cellColumn];
-            float southEastHeight = heights[southRowOffset + cellColumn + 1];
-            float northWestHeight = heights[northRowOffset + cellColumn];
-            float northEastHeight = heights[northRowOffset + cellColumn + 1];
-
-            float southEdgeHeight = southWestHeight + ((southEastHeight - southWestHeight) * interpolationX);
-            float northEdgeHeight = northWestHeight + ((northEastHeight - northWestHeight) * interpolationX);
-            groundHeight = heightmapOrigin.y + southEdgeHeight + ((northEdgeHeight - southEdgeHeight) * interpolationZ);
-            return true;
-        }
-
-        private void AppendPolylineIndices(int startVertexIndex, int segmentCount)
-        {
-            for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
-            {
-                int current = startVertexIndex + segmentIndex;
-                _indices.Add(current);
-                _indices.Add(current + 1);
-            }
+            public readonly float Widest => Mathf.Max(Minor, Mathf.Max(Major, Origin));
         }
 
         internal readonly struct GridBuildSpec
         {
             public readonly GridFrame Frame;
             public readonly GridSurface Surface;
+            public readonly GridStyle Style;
             public readonly float Step;
             public readonly float Radius;
             public readonly float HeightOffset;
             public readonly Color BaseColor;
+            public readonly GridLineWidths LineWidths;
             public readonly Vector3 Origin;
             public readonly Quaternion Rotation;
             public readonly int FocusCellX;
@@ -321,10 +300,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             public GridBuildSpec(
                 GridFrame frame,
                 GridSurface surface,
+                GridStyle style,
                 float step,
                 float radius,
                 float heightOffset,
                 Color baseColor,
+                GridLineWidths lineWidths,
                 Vector3 origin,
                 Quaternion rotation,
                 int focusCellX,
@@ -332,10 +313,12 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             {
                 Frame = frame;
                 Surface = surface;
+                Style = style;
                 Step = step;
                 Radius = radius;
                 HeightOffset = heightOffset;
                 BaseColor = baseColor;
+                LineWidths = lineWidths;
                 Origin = origin;
                 Rotation = rotation;
                 FocusCellX = focusCellX;
@@ -343,14 +326,27 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
             }
 
             public bool FollowTerrain => Surface == GridSurface.Terrain;
+
+            public Vector3 FocusWorldPosition => Origin + (Rotation * new Vector3(FocusCellX * Step, 0f, FocusCellZ * Step));
         }
 
-        private readonly struct GridMeshContext
+        // one grid line. the perpendicular values place the line and the parallel one is where its middle sits
+        protected record struct GridLine(
+            bool AlongZ,
+            int LineOffset,
+            float DeltaPerpendicular,
+            float LocalPerpendicular,
+            float CenterParallel,
+            Color Color,
+            float HalfWidth);
+
+        protected readonly struct GridMeshContext
         {
             public readonly GridBuildSpec BuildSpec;
             public readonly int HalfLineCount;
             public readonly int SubdivisionsPerCell;
             public readonly float SampleStep;
+            public readonly float SampleReach;
             public readonly float CenterLocalX;
             public readonly float CenterLocalZ;
             public readonly float RadiusSquared;
@@ -365,6 +361,8 @@ namespace MasterBuilderHeeler.Core.Visuals.Grid
                 HalfLineCount = Mathf.Max(1, Mathf.CeilToInt(buildSpec.Radius / buildSpec.Step));
                 SubdivisionsPerCell = Mathf.Max(1, Mathf.RoundToInt(buildSpec.Step / MaxTerrainSampleSpacing));
                 SampleStep = buildSpec.Step / SubdivisionsPerCell;
+                // a line can run one sample past the radius and a ribbon edge sits half a width further out
+                SampleReach = buildSpec.Radius + SampleStep + (0.5f * buildSpec.LineWidths.Widest);
                 CenterLocalX = buildSpec.FocusCellX * buildSpec.Step;
                 CenterLocalZ = buildSpec.FocusCellZ * buildSpec.Step;
                 RadiusSquared = buildSpec.Radius * buildSpec.Radius;

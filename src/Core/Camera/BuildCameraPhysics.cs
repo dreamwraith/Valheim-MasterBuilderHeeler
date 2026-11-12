@@ -44,13 +44,11 @@ namespace MasterBuilderHeeler.Core.Camera
 
         public static Quaternion UpdateFlightRotation(Vector2 lookDelta, float deltaTime)
         {
-            float sensitivity = ModConfig.BuildCameraLookSensitivity.Value * PlayerController.m_mouseSens;
-
-            _targetYaw += lookDelta.x * sensitivity * 1.5f;
-            _targetPitch -= lookDelta.y * sensitivity * 1.5f;
+            _targetYaw += lookDelta.x;
+            _targetPitch -= lookDelta.y;
             _targetPitch = Mathf.Clamp(_targetPitch, -89f, 89f);
 
-            float smoothTime = Mathf.Max(0.01f, ModConfig.BuildCameraLookSmoothTime.Value);
+            float smoothTime = Mathf.Max(0.01f, ModConfig.Build.BuildCameraLookSmoothTime.Value);
             _currentYaw = Mathf.SmoothDampAngle(_currentYaw, _targetYaw, ref _currentYawVelocity, smoothTime, float.PositiveInfinity, deltaTime);
             _currentPitch = Mathf.SmoothDampAngle(_currentPitch, _targetPitch, ref _currentPitchVelocity, smoothTime, float.PositiveInfinity, deltaTime);
 
@@ -60,11 +58,11 @@ namespace MasterBuilderHeeler.Core.Camera
         public static Vector3 StepFlightVelocity(Vector3 currentPosition, Vector3 inputVector, bool isSprinting, float deltaTime)
         {
             float targetSpeed = isSprinting
-                ? ModConfig.BuildCameraFastMoveSpeed.Value
-                : ModConfig.BuildCameraMoveSpeed.Value;
+                ? ModConfig.Build.BuildCameraFastMoveSpeed.Value
+                : ModConfig.Build.BuildCameraMoveSpeed.Value;
 
-            Vector3 targetVelocity = inputVector.normalized * targetSpeed;
-            float smoothTime = Mathf.Max(0.02f, ModConfig.BuildCameraSmoothTime.Value);
+            Vector3 targetVelocity = inputVector * targetSpeed;
+            float smoothTime = Mathf.Max(0.02f, ModConfig.Build.BuildCameraSmoothTime.Value);
 
             _currentVelocity = Vector3.SmoothDamp(
                 _currentVelocity,
@@ -87,7 +85,7 @@ namespace MasterBuilderHeeler.Core.Camera
                 return fromPosition;
             }
 
-            int collisionMask = ModConfig.BuildCameraIgnoreCollision.Value
+            int collisionMask = ModConfig.Build.BuildCameraIgnoreCollision.Value
                 ? WorldOnlyCollisionMask
                 : FullCollisionMask;
 
