@@ -5,6 +5,46 @@ All notable changes to **MasterBuilderHeeler** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-11-12
+
+### Added
+
+- Gamepad support for build mode on all three controller layouts. Hold X as a layer for nudging, the rotation axis, ghost
+  freeze and step presets - tap X for a build radial with everything else (also available via keyboard mapping).
+- Precision rotation follows the rotate buttons of the active controller layout. Place or remove will commit or cancel
+  an in-place edit and Build Camera flies with the sticks.
+- Gamepad mappings get their own config section, `Gamepad Bindings`.
+- HUD panels show gamepad buttons while a gamepad is in use and go back to keys with keyboard and mouse. `KeymapDisplay`
+  can lock them to keyboard or gamepad or both at once.
+- New Solid gizmo style as the default, 3D tubes with optional world lighting. Wireframe is retained as the simpler
+  option.
+- Ribbon grid mode with thicker gridlines, widths configurable in meters per line type. `GridOverlayStyle` switches
+  back to Wireframe.
+- `Global Panel Legend` and `Precision Panel Legend`, a switch per HUD row to hide its key. A row with status indicators
+  keeps them but still hides the keymap.
+
+### Changed
+
+- Config sections got moved around and a couple got renamed. Saved settings carry over on the first launch into a net
+  new file with the old one as a `.pre-2.0.bak` backup.
+- A server with the mod needs 2.0 too - config sync turns away anything older.
+- Default gizmo colors and grid heights are different. An existing config picks those up along with the Solid gizmo
+  unless they were set to something else.
+- The axis and nudge symbols on the Precision panel take the colors of the gizmo rings and arrows.
+- Step presets wrap around, Coarse to UltraFine and back.
+
+### Fixed
+
+- The gizmo rings in World rotation mode sit on the axes the piece actually turns around.
+- Terrain grid algorithm refactored for accuracy and performance. No more lines sinking into the ground or floating over
+  it on half meter and Local grids.
+- Grid overlay colors match the color picked. A custom color will look darker than it did.
+- Build Camera mouse look follows the game's Invert Mouse setting.
+
+### Removed
+
+- `HudAxisPitchColor`, `HudAxisYawColor` and `HudAxisRollColor`. The gizmo ring colors do that job.
+
 ## [1.2.1] - 2026-11-04
 
 ### Added
@@ -25,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Putting the hammer away doesn't reset your rotation and build settings anymore. Did that on purpose originally but
-  people complained about it, so it's gone. Nudge offset clears when you put it away, dying or logging out resets everything.
+  people complained about it, so it's gone. Nudge offset clears when you put it away, dying or logging out
+  resets everything.
 - Five step presets now, UltraFine to Coarse, `-` and `=` to go down and up. Fine is the default preset. Standard is 22.5
   so it matches the game.
 - Step size settings and the step keys got renamed, if you changed or rebound them you'll need to redo it.

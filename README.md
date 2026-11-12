@@ -15,9 +15,11 @@
 [![License](https://img.shields.io/github/license/dreamwraith/Valheim-MasterBuilderHeeler?color=blue)](LICENSE.md)
 [![AI Philosophy](https://img.shields.io/badge/AI%20Philosophy-Software%20Craft-2ea44f?logo=github)](https://gist.github.com/dreamwraith/77c91d656c842611bf8c40febf8056f2)
 
-In native Valheim, piece placement is limited to single-axis rotation in fixed steps from the player's viewpoint, with no way to tilt pieces, nudge placement offsets, align to a build grid, or reposition placed pieces without dismantling them. **MasterBuilderHeeler** adds 3-axis rotation, step scaling, piece nudging, ghost freezing, grid snapping, in-place piece editing, piece sampling, a tethered Build Camera, and HUD info panels.
+The base game rotates a piece around one axis in fixed steps and that's about it. No tilt, no nudging a piece over a bit, no grid... and moving something that's already placed means tearing it down first.
 
-Placed and edited pieces use standard Valheim network data, so the mod works in single-player and on unmodded multiplayer servers. When installed on a server, gameplay and reach rules can be synchronized across connected players.
+**MasterBuilderHeeler** adds all of that along with ghost freeze, piece sampling, a tethered Build Camera and HUD info panels. Keyboard and mouse or gamepad.
+
+Placed and edited pieces use the game's own network data - works in single-player and on servers that don't have the mod. A server that has it can sync gameplay and reach rules to its players.
 
 ---
 
@@ -35,45 +37,67 @@ MasterBuilderHeeler draws inspiration from the following Valheim mods and commun
 
 ## Features
 
-Nudge, ghost freeze, in-place edit, and sampling need Precision Mode on. Grid keys work without it. Piece rotation, Precision and Roof Mode, frames, step, and grid settings stay how you left them when you put the hammer away or teleport, and only the nudge offset clears. Logging in or dying puts everything back to the configured defaults, and `ResetBuildSettingsKey` (F10) does the same for everything but Precision Mode. Set your preferred starting values under the `Default` settings.
+Nudge, ghost freeze, in-place edit, and sampling need Precision Mode on. Grid keys work without it. Piece rotation, Precision and Roof Mode, frames, step, and grid settings stay how you left them when you put the hammer away or teleport. Only the nudge offset clears. Logging in or dying puts everything back to the configured defaults - `ResetBuildSettingsKey` (F10) does the same for everything but Precision Mode. Set your preferred starting values under the `Default` settings.
 
-- **3-axis rotation:** Rotate pieces across yaw, pitch, and roll in World or Local frames with a 3D ring gizmo, plus Corner Roof alignment for 45-degree roof slopes. Terrain tool pieces keep native rotation.
-- **Step presets and scaling:** Move through UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge steps, and scale step sizes up or down on the fly. Fine is the starting preset, and Standard matches the game's 22.5-degree rotation step.
-- **Ghost freeze and piece nudging:** Pin the placement ghost in place to inspect alignment from any angle, and nudge pieces along Local or World axes.
-- **Grid snapping and overlay:** Snap piece pivots or manual snap points to a configurable World or piece-anchored Local grid, with an optional terrain-following or flat grid overlay.
-- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, and health. Support is recalculated at the new position, and unsupported pieces break. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu, and containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends, and the placement ghost gets its rotation back afterward.
-- **Placement rules:** Snapped, nudged, frozen, and edited pieces skip the base game rules for wood surfaces, floors, ceilings, non-supporting pieces, and required connections. Other base game placement rules still apply, and unsupported pieces still break. Build Camera range can technically exceed active loaded zones, so a placement check prevents placing outside the active zone.
-- **Piece and rotation sampling:** Select the aimed piece directly in the active build menu or copy a placed piece's 3D rotation onto the active ghost. `PrecisionCopyBehavior` sets how the sample keys work with native Copy Piece.
+- **3-axis rotation:** Rotate pieces across yaw, pitch, and roll in World or Local frames with a 3D ring gizmo in a lit Solid or a Wireframe style, plus Corner Roof alignment for 45-degree roof slopes. Terrain tool pieces keep the base game rotation.
+- **Step presets and scaling:** Move through UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge steps and scale step sizes up or down on the fly. Starts on Fine. Standard matches the game's 22.5-degree rotation step.
+- **Ghost freeze and piece nudging:** Pin the placement ghost in place to inspect alignment from any angle and nudge pieces along Local or World axes.
+- **Grid snapping and overlay:** Snap piece pivots or manual snap points to a configurable World or piece-anchored Local grid, with an optional terrain-following or flat grid overlay drawn as Ribbon or Wireframe lines.
+- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, and health. Support is recalculated at the new position - unsupported pieces break. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu. Containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends (the placement ghost gets its rotation back afterward).
+- **Placement rules:** Snapped, nudged, frozen, and edited pieces skip the base game rules for wood surfaces, floors, ceilings, non-supporting pieces, and required connections. Other base game placement rules still apply and unsupported pieces still break. Build Camera range can technically exceed active loaded zones. A placement check prevents placing outside the active zone.
+- **Piece and rotation sampling:** Select the aimed piece directly in the active build menu or copy a placed piece's 3D rotation onto the active ghost. `PrecisionCopyBehavior` sets how the sample keys work with the base game Copy Piece.
 - **Build reach:** `EnableExtendedAvatarReach` extends player placement, repair, dismantle, and in-place edit reach to `MaxBuildReachDistance`. `ValidateStationRangeAtPieceLocation` checks crafting station range at the target piece instead of the player. Both are off by default. `MaxBuildReachDistance` limits extended player reach and in-place edit, sampling, and hover targeting. Build Camera reach is the game's 50m raycast, otherwise limited by `BuildCameraTetherRadius` and workbench range at the piece. The Build Camera always checks station range at the target piece.
 - **Build Camera:** Free-flying camera tethered to the player while holding a build tool, with an optional spotlight, Wisplight-gated Mistlands mist clearing, and nearby item auto-pickup gated by active Comfort, ward access, carry weight, and inventory space. Move with the game's movement binds, with Jump and Crouch for up and down and Run for speed. The camera collides with terrain, rocks, trees, and pieces, or only with terrain and rocks while `BuildCameraIgnoreCollision` is on. It exits on death, teleport, or leaving build mode.
 - **HUD info panels:** Optional on-screen control panels and piece inspection readouts showing active bindings, piece name, prefab ID, health, structural stability, rotation, distance, and world coordinates.
-- **Feature toggles:** Turn off whole features, for example to keep only the Build Camera. `EnablePrecision`, `EnableBuildCamera`, `EnableGrid`, and `EnableInfoPanels` remove the feature, its keys, and its HUD rows, and apply live without a restart.
+- **Gamepad:** The mod's build controls on a controller. See [Gamepad](#gamepad).
+- **Feature toggles:** Turn off whole features, for example to keep only the Build Camera. `EnablePrecision`, `EnableBuildCamera`, `EnableGrid`, and `EnableInfoPanels` remove the feature, its keys, and its HUD rows. No restart needed.
 
 ---
 
 ## Configuration
 
-> [!NOTE]
-> Gamepad bindings are not available yet for this mod. Gamepad configuration is coming soon.
-
 Settings, keybindings, panel positions, and theme colors can be changed live using the BepInEx Configuration Manager (`F1`, installed separately) or by editing `BepInEx/config/dreamwraith.MasterBuilderHeeler.cfg`. The mod reloads the file when it is saved, without a restart:
 
 | Section | Sync Policy | Description |
 | :--- | :--- | :--- |
-| `General` | Conditional (Server) / Client | Master enable toggle, feature toggles, extended build reach, station range rules, hovered piece build tool requirement, gizmo style and scale, and log level. |
+| `General` | Conditional (Server) / Client | Master enable toggle, feature toggles, extended build reach, station range rules, hovered piece build tool requirement, and log level. |
 | `Precision Settings` | Conditional (Client) | Default Precision and Roof Mode states, copy behavior, plus UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge step sizes. |
-| `Grid Settings` | Conditional (Client) / Client | Default grid cell size, optional vertical snap, and grid overlay radius, height offsets, and colors. |
+| `Gizmo Settings` | Client | Gizmo style, scale, and lighting, plus color and opacity settings for the 3D gizmo rings and arrows. The Precision panel axis and nudge symbols use the same colors. |
+| `Grid Settings` | Conditional (Client) / Client | Default grid cell size, optional vertical snap, and grid overlay style, radius, height offsets, colors, and Ribbon line widths. |
 | `Build Camera` | Conditional (Server) / Conditional (Client) / Client | Tether radius, collision toggle, `MaxBuildReachDistance`, movement speeds, mouse sensitivity, and camera smoothing. |
 | `Build Camera Light` | Conditional (Client) | Spotlight toggle, brightness, range, cone angle, and light color. |
-| `Build Camera Demister & AutoPickup` | Conditional (Server) | Mistlands mist clearing, Wisplight requirement, auto-pickup toggle and radius, Comfort requirement, and ward check. |
-| `HUD & Info Panels` | Client | Background toggle, inspection poll interval, and native piece health bar toggle. |
+| `Build Camera Extras` | Conditional (Server) | Mistlands mist clearing, Wisplight requirement, auto-pickup toggle and radius, Comfort requirement, and ward check. |
+| `HUD & Info Panels` | Client | Background toggle, inspection poll interval, base game piece health bar toggle, and keymap display mode. |
 | `Global / Precision / Hover / Placement Panel` | Client | Per-panel visibility, screen offsets, font sizes, background color and opacity, and individual inspection fields. |
-| `Keybindings (Keyboard & Mouse)` | Client | Shortcuts and modifier combinations for all build, rotation, nudge, grid, camera, sampling, edit, and reset actions. |
-| `Gizmo Colors` / `HUD Colors` | Client | Color and opacity settings for 3D gizmo rings and arrows, HUD text roles, status indicators, and health/stability gradients. |
+| `Global Panel Legend` / `Precision Panel Legend` | Client | One switch per HUD row that hides the key binding on that row. |
+| `Keyboard & Mouse Bindings` | Client | Shortcuts and modifier combinations for all build, rotation, nudge, grid, camera, sampling, edit, and reset actions. |
+| `Gamepad Bindings` | Client | Gamepad controls toggle, the layer button, and the button for each layer action. |
+| `HUD Colors` | Client | Color and opacity settings for HUD text roles, status indicators, and health/stability gradients. |
 
-**Sync policies:** `Client` settings are never synced and stay under each player's control. `Conditional (Server)` settings are server-controlled by default, and administrators can defer them to clients. `Conditional (Client)` settings are client-controlled by default, and administrators can enforce them. A section with more than one policy contains settings of each listed type. Only server administrators can edit server-controlled settings.
+**Sync policies:** `Client` settings are never synced and stay under each player's control. `Conditional (Server)` settings are server-controlled unless an administrator defers them to clients. `Conditional (Client)` settings are client-controlled unless an administrator enforces them. A section with more than one policy contains settings of each listed type. Only server administrators can edit server-controlled settings.
 
-**Keybindings:** Mod keys can be rebound in the `Keybindings (Keyboard & Mouse)` section. Rotation uses the mouse wheel, and Build Camera movement uses the game's movement binds. While a build tool is equipped, the Global panel shows the active bindings. The Precision panel shows its bindings while Precision Mode is on.
+**Updating from 1.x:** 2.0 moved and renamed config sections. Saved settings carry over on the first launch into a net new file with the old one as a `.pre-2.0.bak` backup. The gizmo style, gizmo colors and grid heights take the new defaults unless they were changed. A server with the mod needs 2.0 too - config sync turns away anything older.
+
+**Keybindings:** Mod keys can be rebound in the `Keyboard & Mouse Bindings` section. Rotation uses the mouse wheel and Build Camera movement uses the game's movement binds. While a build tool is equipped, the Global panel shows the active bindings. The Precision panel shows its bindings while Precision Mode is on. Know a key by heart? Hide it on its HUD row in `Global Panel Legend` or `Precision Panel Legend`. A row keeps its status - a row that is only a key goes away. The build radial from the [Gamepad](#gamepad) section opens on keyboard with `OpenBuildRadialKey` (F4) - point the mouse at an entry, left click to pick it, right click to go back.
+
+### Gamepad
+
+Works with all three of the game's controller layouts. The base game build controls stay where they are. Hold the layer button (X by default) and press another button for the actions below, or tap it for a build radial with everything else - Precision Mode, rotation and nudge frames, resets, step presets and scale, grid, sampling, in-place edit, and the Build Camera.
+
+| Input | Action |
+| :--- | :--- |
+| The layout's rotate buttons (Classic: LT + right stick, Alternative: LT or RT) | Rotate on the active axis in Precision Mode or an in-place edit. |
+| X (tap) | Open or close the build radial. |
+| X + D-pad | Nudge forward, backward, left, and right. |
+| X + RB / X + LB | Nudge up / down. |
+| X + RT | Next rotation axis (Yaw, Pitch, Roll). |
+| X + LT | Freeze or unfreeze the ghost. |
+| X + left stick click | Next step preset. Coarse wraps to UltraFine. |
+| The layout's place / remove buttons | Commit / cancel an in-place edit. Cancel is a quick tap. |
+
+The radial uses the game's own radial controls: right stick to pick, the attack button to confirm, the block button to go back, and B to close. While X is held, the base game actions on the other buttons are held back. In the Build Camera the left stick moves, the right stick looks, Jump goes up, holding Crouch goes down, and Run is the fast speed.
+
+The layer button and the button for each layer action can be changed in the `Gamepad Bindings` section. `EnableGamepadControls` turns all of it off. Keyboard and mouse bindings stay active and the HUD panels show the bindings for whichever device was used last. `KeymapDisplay` in `HUD & Info Panels` can lock the panels to keyboard, gamepad, or both side by side. `BothAlways` makes the panels a lot wider - the `Global Panel` `OffsetX` will need moving by hand.
 
 ### Key Settings
 
@@ -87,10 +111,13 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 | `EnableExtendedAvatarReach` | `false` | Extends player reach to `MaxBuildReachDistance`. |
 | `ValidateStationRangeAtPieceLocation` | `false` | Checks crafting station range at the target piece. |
 | `RequireHammerForHoverInspection` | `true` | Requires any build tool for the Hover panel. |
+| `GizmoRendererStyle` | `Solid` | Rotation gizmo style (`Solid`, `ProceduralWireframe`, or `Disabled`). |
+| `EnableGizmoLighting` | `true` | Lights the Solid gizmo with world light, shadows, and fog. Off uses fixed shading. |
 | `GizmoScale` | `1.0` | Rotation gizmo size (0.25 - 4.0). |
 | `EnablePrecisionModeByDefault` | `true` | Turns on Precision Mode at login and after respawn. |
 | `PrecisionCopyBehavior` | `SideBySide` | Sets how Copy Piece and the sample keys work together. |
 | `DefaultGridSize` | `1.0` | Starting grid cell size in meters. |
+| `GridOverlayStyle` | `Ribbon` | Grid overlay style. `Ribbon` draws lines with a width in meters, `Wireframe` draws thin lines at a lower performance cost. |
 | `BuildCameraTetherRadius` | `50.0` | Maximum camera distance from the player (10 - 200). |
 | `MaxBuildReachDistance` | `50.0` | Extended player reach and MBH targeting limit (10 - 50). |
 | `EnableCameraDemister` | `true` | Clears Mistlands mist around the Build Camera. |
@@ -99,15 +126,14 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 Step sizes, grid overlay, camera feel, spotlight, panel layout, and colors are summarized in the section table above. Configuration Manager shows the default and range of every setting.
 
 > [!NOTE]
-> Default keyboard bindings avoid native Build Mode controls and BepInEx Configuration Manager (`F1`), while `Z`, `B`, `K`, and `L` overlap with Valheim `debugmode` shortcuts (`ToggleDebugFly`, `ToggleNoPlacementCost`, `killenemies`, and `removedrops`). Players who regularly build with `debugmode` enabled should rebind those keys in Configuration Manager.
+> Default keyboard bindings avoid base game Build Mode controls and BepInEx Configuration Manager (`F1`), but `Z`, `B`, `K`, and `L` overlap with Valheim `debugmode` shortcuts (`ToggleDebugFly`, `ToggleNoPlacementCost`, `killenemies`, and `removedrops`). Players who regularly build with `debugmode` enabled should rebind those keys in Configuration Manager.
 
 ---
 
 ## Compatibility
 
-- **Multiplayer and single-player:** Works in local worlds and on multiplayer servers, including servers that do not have the mod installed.
-- **Optional server sync:** When installed on a server with **ConditionalConfigSync**, administrators can enforce feature toggles, reach, Build Camera limits, Mistlands mist clearing, and auto-pickup rules while leaving keybindings, colors, camera feel, and HUD layout under each player's control. `RequireHammerForHoverInspection` is the exception, because it is server-controlled by default. Feature toggles are server-controlled by default, and administrators can defer any of them to clients. Policies can be customized in `BepInEx/config/shudnal.ConditionalConfigSync/ConditionalConfigSync.SyncPolicy.cfg`. Players without the mod can still join a server that has it. To require it, set it in `BepInEx/config/shudnal.ConditionalConfigSync/ConditionalConfigSync.ModRequirements.cfg`.
-- **Input devices:** Keyboard and mouse controls are supported for mod actions. Gamepad shortcuts for mod actions are not yet implemented. Gamepad players should set `EnablePrecisionModeByDefault` to off, because Precision Mode rotation uses the mouse wheel and ignores gamepad rotation.
+- **Optional server sync:** When installed on a server with ConditionalConfigSync, administrators can enforce feature toggles, reach, Build Camera limits, Mistlands mist clearing, and auto-pickup rules. Keybindings, colors, camera feel, and HUD layout stay under each player's control, except `RequireHammerForHoverInspection` which is server-controlled by default. Policies can be customized in `BepInEx/config/shudnal.ConditionalConfigSync/ConditionalConfigSync.SyncPolicy.cfg`. Players without the mod can still join a server that has it. To require it, set it in `BepInEx/config/shudnal.ConditionalConfigSync/ConditionalConfigSync.ModRequirements.cfg`.
+- **Input devices:** Keyboard and mouse and gamepad are both supported for mod actions. Switching between them mid-session is fine. See [Gamepad](#gamepad).
 - **Mod managers:** Compatible with Gale, Thunderstore Mod Manager, and r2modman.
 
 ### Compatible Mods
@@ -133,7 +159,7 @@ These mods overlap with parts of MasterBuilderHeeler. Do not run the overlapping
 - **ComfyGizmo:** Overlaps 3-axis rotation and the gizmo. Set `EnablePrecision` to off.
 - **EulersRuler:** Overlaps the Hover and Placement panels. Set `ShowPanel` to off in `Hover Panel` and `Placement Panel`, or set `EnableInfoPanels` to off to remove all panels.
 
-On a server with the mod installed, the `Enable` settings are server-controlled by default, so an administrator must change them or defer them to clients.
+On a server with the mod installed, the `Enable` settings are server-controlled by default and an administrator must change them or defer them to clients.
 
 ---
 
@@ -141,18 +167,18 @@ On a server with the mod installed, the `Enable` settings are server-controlled 
 
 ### Mod Manager (Recommended)
 
-Install through **Gale**, **Thunderstore Mod Manager**, or **r2modman**. Dependencies are installed automatically.
+Install through Gale, Thunderstore Mod Manager, or r2modman. Dependencies are installed automatically.
 
 ### Manual Installation
 
-1. Install **BepInExPack Valheim**, **Jotunn**, and **ConditionalConfigSync**.
-2. Download the latest release from GitHub, Thunderstore, or Nexus Mods
+1. Install BepInExPack Valheim, Jotunn, and ConditionalConfigSync.
+2. Download the latest release from GitHub, Thunderstore, or Nexus Mods.
 3. Place `MasterBuilderHeeler.dll` into `Valheim/BepInEx/plugins/`.
 4. Launch Valheim.
 
 ### Server Installation (Optional)
 
-A server install is not required. To enforce settings across connected players, install **BepInExPack Valheim**, **Jotunn**, **ConditionalConfigSync**, and **MasterBuilderHeeler** on the server. Clients need **ConditionalConfigSync** with or without a server install.
+To enforce settings across connected players, install BepInExPack Valheim, Jotunn, ConditionalConfigSync, and MasterBuilderHeeler on the server. Clients need ConditionalConfigSync with or without a server install.
 
 On a headless dedicated server, the mod loads its settings for sync only. It applies no patches and runs no input, HUD, or rendering code. Saved changes to the server config file reload and sync to connected players without a restart.
 
@@ -178,6 +204,7 @@ You can also find and message DreamWraith on these Valheim Discord servers:
 
 - [**WispTorchHeeler**](https://thunderstore.io/c/valheim/p/DreamWraith/WispTorchHeeler/): Tiered Mistlands wisp torches and lamps with expanded mist clearance, torch painting, and Wisplight customization.
 - [**PersonalChestHeeler**](https://thunderstore.io/c/valheim/p/DreamWraith/PersonalChestHeeler/): Tiered personal locked storage chests with server-synced capacity and crafting recipes.
+- [**PlantBiomeHeeler**](https://thunderstore.io/c/valheim/p/DreamWraith/PlantBiomeHeeler/): Terrain overlay and HUD that show which biome a crop or sapling actually gets, with two-tone borders and optional hatch lines.
 
 ### HUD
 
@@ -208,7 +235,7 @@ dotnet build MasterBuilderHeeler.sln -c Release
 
 The compiled assembly is output to `bin/Release/net48/MasterBuilderHeeler.dll`. Building with the `Release` configuration also creates a distribution zip in `bin/Publish/`.
 
-The build references `ConditionalConfigSync.dll` from `BEPINEX_PATH`. Install **ConditionalConfigSync** in `plugins/` or `plugins/shudnal-ConditionalConfigSync/` under that folder before building.
+The build references `ConditionalConfigSync.dll` from `BEPINEX_PATH`. Install ConditionalConfigSync in `plugins/` or `plugins/shudnal-ConditionalConfigSync/` under that folder before building.
 
 ### Custom Paths
 
@@ -217,13 +244,13 @@ For custom installations, non-standard Steam paths, or mod manager profiles, cop
 - `VALHEIM_INSTALL`: Root Valheim installation folder.
 - `BEPINEX_PATH`: Root BepInEx folder (containing `core`, `plugins`, etc.).
 
-Alternatively, you can set `VALHEIM_INSTALL` and `BEPINEX_PATH` as environment variables.
+Or set `VALHEIM_INSTALL` and `BEPINEX_PATH` as environment variables.
 
 ---
 
 ## Packaging and Releases
 
-Packaging and release automation are handled through [`.scripts/modtools.ps1`](.scripts/modtools.ps1) using the [**`DW.ValheimModTools`**](https://github.com/dreamwraith/DW-ValheimModTools) module:
+Packaging and release automation are handled through [`.scripts/modtools.ps1`](.scripts/modtools.ps1) using the [`DW.ValheimModTools`](https://github.com/dreamwraith/DW-ValheimModTools) module:
 
 - **Create a release:** `pwsh ./.scripts/modtools.ps1 release` (builds Release, creates the distribution archive, extracts changelog notes, syncs repository secrets, and creates a GitHub Release, Draft by default).
 - **Bump version and package:** `pwsh ./.scripts/modtools.ps1 package -Bump Patch`

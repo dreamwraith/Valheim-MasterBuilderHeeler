@@ -8,9 +8,9 @@
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>1.2.1</Version>
+    <Version>2.0.0</Version>
     <PackageWebsiteUrl>https://github.com/dreamwraith/Valheim-MasterBuilderHeeler</PackageWebsiteUrl>
-    <PackageDescription>Precision building tools for Valheim: pitch, yaw, and roll rotation, grid snapping, piece nudging, ghost freeze, in-place piece moving, piece sampling, build camera, and build info panels.</PackageDescription>
+    <PackageDescription>Precision building tools for Valheim: pitch, yaw, and roll rotation, grid snapping, piece nudging, ghost freeze, in-place piece moving, piece sampling, build camera, build info panels, and gamepad support.</PackageDescription>
     <Authors>DreamWraith</Authors>
     <Company>DreamWraith (https://github.com/dreamwraith)</Company>
     <Copyright>Copyright (c) 2026 DreamWraith</Copyright>
