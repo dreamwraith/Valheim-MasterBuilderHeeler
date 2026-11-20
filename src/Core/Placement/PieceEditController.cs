@@ -113,6 +113,7 @@ namespace MasterBuilderHeeler.Core.Placement
             _editedPieceHasContainers = hasContainers;
 
             BuildStateManager.EnterPieceEdit(targetPiece);
+            PlacementValidator.ApplyEditHighlight(targetPiece, true);
             PieceRotationEngine.RefreshTargetMetadata(targetPiece.gameObject);
             PieceTranslationEngine.ResetOffset();
             PieceRotationEngine.SaveRotation();
@@ -138,16 +139,21 @@ namespace MasterBuilderHeeler.Core.Placement
                 return;
             }
 
-            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(piece.transform.rotation);
-            if (piece.transform.rotation != resolvedRotation)
+            Transform pieceTransform = piece.transform;
+            Quaternion currentRotation = pieceTransform.rotation;
+            Vector3 currentPosition = pieceTransform.position;
+
+            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(currentRotation);
+            // Quaternion != skips rotations under ~0.16 deg so UltraFine 0.125x steps need Equals
+            if (!currentRotation.Equals(resolvedRotation))
             {
-                piece.transform.rotation = resolvedRotation;
+                pieceTransform.rotation = resolvedRotation;
             }
 
-            Vector3 resolvedPosition = PieceTranslationEngine.ResolveTargetPosition(piece, piece.transform.position, resolvedRotation);
-            if (piece.transform.position != resolvedPosition)
+            Vector3 resolvedPosition = PieceTranslationEngine.ResolveTargetPosition(piece, currentPosition, resolvedRotation);
+            if (currentPosition != resolvedPosition)
             {
-                piece.transform.position = resolvedPosition;
+                pieceTransform.position = resolvedPosition;
             }
 
             PlacementValidator.ValidateEditedPiece(player, piece, false);

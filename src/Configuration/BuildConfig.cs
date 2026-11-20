@@ -61,6 +61,9 @@ namespace MasterBuilderHeeler.Configuration
             "Nudge step in meters when the Coarse step preset is active.",
             new AcceptableValueRange<float>(0.25f, 5.0f));
 
+        public ConfigEntry<Color> EditHighlightColor { get; } = precision.Client<Color>("EditHighlightColor", new Color32(255, 105, 180, 255),
+            "Highlight color of the piece in an in-place edit. An invalid placement shows red.");
+
         public ConfigEntry<GizmoStyle> GizmoRendererStyle { get; } = gizmo.Client("GizmoRendererStyle", GizmoStyle.Solid,
             "Visual style for the rotation gizmo (set to Disabled to hide the gizmo).");
 

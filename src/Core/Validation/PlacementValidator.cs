@@ -18,7 +18,6 @@ namespace MasterBuilderHeeler.Core.Validation
         private static readonly RaycastHit[] SurfaceHitBuffer = new RaycastHit[16];
 
         private static bool _isValidatingEditedPiece;
-        private static Player.PlacementStatus _prePostfixEditStatus;
 
         public static bool IsValidatingEditedPiece => _isValidatingEditedPiece;
         public static Piece? RepairOrRemoveTarget { get; set; }
@@ -66,45 +65,70 @@ namespace MasterBuilderHeeler.Core.Validation
             // swap editedPiece into m_placementGhost and call UpdatePlacementGhost. janky but the prefix skips the base body
             // and other mods postfixes still run, so they can read m_placementGhost and change the status
             GameObject? previousGhost = player.m_placementGhost;
+            Transform editedTransform = editedPiece.transform;
+            Vector3 savedPosition = editedTransform.position;
+            Quaternion savedRotation = editedTransform.rotation;
             _isValidatingEditedPiece = true;
-            _prePostfixEditStatus = Player.PlacementStatus.Valid;
             player.m_placementGhost = editedPiece.gameObject;
 
             try
             {
                 player.UpdatePlacementGhost(flashGuardStone);
-                Player.PlacementStatus finalStatus = player.m_placementStatus;
-                // another mods postfix can change the status after validation, make the highlight match what came out
-                if (_prePostfixEditStatus != Player.PlacementStatus.Valid && finalStatus == Player.PlacementStatus.Valid)
-                {
-                    editedPiece.SetInvalidPlacementHeightlight(false);
-                }
-                else if (finalStatus != Player.PlacementStatus.Valid)
-                {
-                    editedPiece.SetInvalidPlacementHeightlight(true);
-                }
-
-                return finalStatus;
             }
             finally
             {
                 player.m_placementGhost = previousGhost;
                 _isValidatingEditedPiece = false;
+
+                // another mods postfix can move m_placementGhost (the real edited piece here), put it back
+                if (editedTransform.position != savedPosition)
+                {
+                    editedTransform.position = savedPosition;
+                }
+
+                // Equals avoids the ~0.16 deg Quaternion != dead band
+                if (!editedTransform.rotation.Equals(savedRotation))
+                {
+                    editedTransform.rotation = savedRotation;
+                }
             }
+
+            Player.PlacementStatus finalStatus = player.m_placementStatus;
+            // apply after postfixes and finalizers so mods calling SetPlacementGhostValid(true) dont wipe the edit tint
+            ApplyEditHighlight(editedPiece, finalStatus == Player.PlacementStatus.Valid);
+            return finalStatus;
         }
 
-        public static void ValidateEditedGhostInPrefix(Player player, bool flashGuardStone) =>
-            _prePostfixEditStatus = ValidateGhost(player, flashGuardStone);
+        // WearNTear.Highlight triggers easy bake handback and schedules a 0.2s reset. writing _Color
+        // and _EmissionColor over it keeps MaterialMan batchers off the piece too
+        public static void ApplyEditHighlight(Piece piece, bool isValid)
+        {
+            if (!piece.TryGetComponent(out WearNTear wearNTear))
+            {
+                piece.SetInvalidPlacementHeightlight(!isValid);
+                return;
+            }
 
-        public static Player.PlacementStatus ValidateGhost(Player player, bool flashGuardStone)
+            wearNTear.Highlight();
+            if (!isValid)
+            {
+                piece.SetInvalidPlacementHeightlight(true);
+                return;
+            }
+
+            Color editColor = ModConfig.Build.EditHighlightColor.Value;
+            GameObject pieceObject = piece.gameObject;
+            MaterialMan.instance.SetValue(pieceObject, ShaderProps._Color, editColor);
+            MaterialMan.instance.SetValue(pieceObject, ShaderProps._EmissionColor, editColor * 0.4f);
+        }
+
+        public static void ValidateGhost(Player player, bool flashGuardStone)
         {
             GameObject ghost = player.m_placementGhost;
             if (ghost && ghost.TryGetComponent(out Piece piece))
             {
-                return Validate(player, ghost, piece, flashGuardStone);
+                Validate(player, ghost, piece, flashGuardStone);
             }
-
-            return player.m_placementStatus;
         }
 
         public static string GetStatusMessage(Player.PlacementStatus status) => status switch
@@ -128,37 +152,37 @@ namespace MasterBuilderHeeler.Core.Validation
 
         // base game status checks all run off its own raycast hit, which is useless once a ghost is nudged snapped or frozen
         // so this redoes most of them against where the piece actually is. the wood, floor, ceiling and connection
-        // rules are left out on purpose, because thats kind of the point of a precision placement mod. m_supports is out too, 
+        // rules are left out on purpose, because thats kind of the point of a precision placement mod. m_supports is out too,
         // because WearNTear still runs stability, and if you do something dumb, it will punish you anyways.
         private static Player.PlacementStatus Validate(Player player, GameObject ghost, Piece piece, bool flashGuardStone)
         {
             Vector3 position = ghost.transform.position;
             if (!IsInsideActiveLoadedZone(position))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.Invalid);
+                return SetStatus(player, Player.PlacementStatus.Invalid);
             }
 
             if (Location.IsInsideNoBuildLocation(position))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.NoBuildZone);
+                return SetStatus(player, Player.PlacementStatus.NoBuildZone);
             }
 
             bool hasWard = piece.TryGetComponent(out PrivateArea ward);
             float wardRadius = hasWard ? ward.m_radius : 0f;
             if (!PrivateArea.CheckAccess(position, wardRadius, flashGuardStone, hasWard))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.PrivateZone);
+                return SetStatus(player, Player.PlacementStatus.PrivateZone);
             }
 
             if (IsBlockedByCharacter(ghost, position))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.BlockedbyPlayer);
+                return SetStatus(player, Player.PlacementStatus.BlockedbyPlayer);
             }
 
             Heightmap.Biome targetBiome = Heightmap.FindBiome(position);
             if (piece.m_onlyInBiome != Heightmap.Biome.None && (targetBiome & piece.m_onlyInBiome) == 0)
             {
-                return SetStatus(player, piece, Player.PlacementStatus.WrongBiome);
+                return SetStatus(player, Player.PlacementStatus.WrongBiome);
             }
 
             if (!piece.m_allowedInDungeons &&
@@ -166,12 +190,12 @@ namespace MasterBuilderHeeler.Core.Validation
                 (!EnvMan.instance || !EnvMan.instance.CheckInteriorBuildingOverride()) &&
                 (!ZoneSystem.instance || !ZoneSystem.instance.GetGlobalKey(GlobalKeys.DungeonBuild)))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.NotInDungeon);
+                return SetStatus(player, Player.PlacementStatus.NotInDungeon);
             }
 
             if (piece.m_onlyInTeleportArea && !EffectArea.IsPointInsideArea(position, EffectArea.Type.Teleport))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.NoTeleportArea);
+                return SetStatus(player, Player.PlacementStatus.NoTeleportArea);
             }
 
             if (piece.TryGetComponent(out StationExtension stationExtension))
@@ -184,12 +208,12 @@ namespace MasterBuilderHeeler.Core.Validation
                 else
                 {
                     stationExtension.StopConnectionEffect();
-                    return SetStatus(player, piece, Player.PlacementStatus.ExtensionMissingStation);
+                    return SetStatus(player, Player.PlacementStatus.ExtensionMissingStation);
                 }
 
                 if (stationExtension.OtherExtensionInRange(piece.m_spaceRequirement))
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.MoreSpace);
+                    return SetStatus(player, Player.PlacementStatus.MoreSpace);
                 }
             }
 
@@ -219,13 +243,13 @@ namespace MasterBuilderHeeler.Core.Validation
                 Array.Clear(OverlapColliderBuffer, 0, hitCount);
                 if (blockedByPiece)
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.MoreSpace);
+                    return SetStatus(player, Player.PlacementStatus.MoreSpace);
                 }
             }
 
             if (piece.m_noClipping && IsClippingBlocked(player, ghost, 0.2f))
             {
-                return SetStatus(player, piece, Player.PlacementStatus.Invalid);
+                return SetStatus(player, Player.PlacementStatus.Invalid);
             }
 
             bool checkDeepSnowLimit = !piece.m_allowedInDeepSnow && targetBiome == Heightmap.Biome.DeepNorth;
@@ -252,34 +276,34 @@ namespace MasterBuilderHeeler.Core.Validation
                 bool isAlternatePlacement = ZInput.GetButton("AltPlace") || ZInput.GetButton("JoyAltPlace");
                 if (piece.m_waterPiece && !hasWaterSurface && !isAlternatePlacement)
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.Invalid);
+                    return SetStatus(player, Player.PlacementStatus.Invalid);
                 }
 
                 if (piece.m_noInWater && hasWaterSurface)
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.Invalid);
+                    return SetStatus(player, Player.PlacementStatus.Invalid);
                 }
 
                 if ((piece.m_groundOnly || piece.m_groundPiece) && !heightmap)
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.Invalid);
+                    return SetStatus(player, Player.PlacementStatus.Invalid);
                 }
 
                 if (piece.m_notOnTiltingSurface && hasSurfaceHit && surfaceHit.normal.y < 0.8f)
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.Invalid);
+                    return SetStatus(player, Player.PlacementStatus.Invalid);
                 }
 
                 if (piece.m_cultivatedGroundOnly && (!heightmap || !heightmap.IsCultivated(surfaceHit.point)))
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.NeedCultivated);
+                    return SetStatus(player, Player.PlacementStatus.NeedCultivated);
                 }
 
                 if (piece.m_vegetationGroundOnly)
                 {
                     if (!heightmap)
                     {
-                        return SetStatus(player, piece, Player.PlacementStatus.NeedDirt);
+                        return SetStatus(player, Player.PlacementStatus.NeedDirt);
                     }
 
                     Heightmap.Biome surfaceBiome = heightmap.GetBiome(surfaceHit.point);
@@ -287,22 +311,22 @@ namespace MasterBuilderHeeler.Core.Validation
                     bool missingDirt = surfaceBiome == Heightmap.Biome.AshLands ? vegetationMask > 0.1f : vegetationMask < 0.25f;
                     if (missingDirt)
                     {
-                        return SetStatus(player, piece, Player.PlacementStatus.NeedDirt);
+                        return SetStatus(player, Player.PlacementStatus.NeedDirt);
                     }
                 }
 
                 if (checkDeepSnowLimit && heightmap && heightmap.GetCultivationMask(surfaceHit.point) > player.m_deepSnowBuildHeight)
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.DeepSnow);
+                    return SetStatus(player, Player.PlacementStatus.DeepSnow);
                 }
 
                 if (piece.m_requireDeepSnow && (targetBiome != Heightmap.Biome.DeepNorth || !heightmap || heightmap.GetCultivationMask(surfaceHit.point) <= 0f))
                 {
-                    return SetStatus(player, piece, Player.PlacementStatus.NoSnow);
+                    return SetStatus(player, Player.PlacementStatus.NoSnow);
                 }
             }
 
-            return SetStatus(player, piece, Player.PlacementStatus.Valid);
+            return SetStatus(player, Player.PlacementStatus.Valid);
         }
 
         private static bool IsBlockedByCharacter(GameObject targetObject, Vector3 position)
@@ -461,18 +485,12 @@ namespace MasterBuilderHeeler.Core.Validation
             return foundHit;
         }
 
-        private static Player.PlacementStatus SetStatus(Player player, Piece piece, Player.PlacementStatus status)
+        private static Player.PlacementStatus SetStatus(Player player, Player.PlacementStatus status)
         {
             player.m_placementStatus = status;
-            bool isValid = status == Player.PlacementStatus.Valid;
-
             if (!_isValidatingEditedPiece)
             {
-                player.SetPlacementGhostValid(isValid);
-            }
-            else
-            {
-                piece.SetInvalidPlacementHeightlight(!isValid);
+                player.SetPlacementGhostValid(status == Player.PlacementStatus.Valid);
             }
 
             return status;

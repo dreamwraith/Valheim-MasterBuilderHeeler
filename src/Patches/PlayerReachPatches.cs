@@ -17,14 +17,21 @@ namespace MasterBuilderHeeler.Patches
             yield return AccessTools.DeclaredMethod(typeof(Player), nameof(Player.RemovePiece));
         }
 
-        // runs first so __state gets set even when another prefix skips the original. postfix restores from it
+        // First prefix and Last finalizer wrap other mods so their prefixes see expanded reach and base reach restores last
         [HarmonyPrefix]
         [HarmonyPriority(Priority.First)]
         private static void Prefix(Player __instance, out float __state) =>
             __state = BuildReachService.ApplyReachExpansion(__instance);
 
-        [HarmonyPostfix]
-        private static void Postfix(Player __instance, float __state) =>
+        // Last prefix reapplies expansion if another mods prefix lowered m_maxPlaceDistance
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.Last)]
+        private static void EnforcePrefix(Player __instance) =>
+            BuildReachService.ApplyReachExpansion(__instance);
+
+        [HarmonyFinalizer]
+        [HarmonyPriority(Priority.Last)]
+        private static void Finalizer(Player __instance, float __state) =>
             BuildReachService.RestoreReach(__instance, __state);
     }
 }

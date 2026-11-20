@@ -58,7 +58,13 @@ namespace MasterBuilderHeeler.Core.Placement
             return originalDistance;
         }
 
-        public static void RestoreReach(Player player, float originalDistance) =>
-            player.m_maxPlaceDistance = originalDistance;
+        public static void RestoreReach(Player player, float originalDistance)
+        {
+            // finalizer still runs if an earlier prefix throws before __state gets set
+            if (originalDistance > 0f)
+            {
+                player.m_maxPlaceDistance = originalDistance;
+            }
+        }
     }
 }

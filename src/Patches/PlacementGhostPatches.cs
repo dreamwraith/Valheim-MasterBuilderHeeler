@@ -20,6 +20,19 @@ namespace MasterBuilderHeeler.Patches
         private static void UpdatePlacementPrefix(ref bool takeInput) =>
             PlacementGhostController.SuppressPlacementInput(ref takeInput);
 
+        // Last capture and First restore bracket only the UpdatePlacement body and leave other mods prefixes and postfixes alone
+        [HarmonyPatch(nameof(Player.UpdatePlacement))]
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.Last)]
+        private static void UpdatePlacementCapturePrefix(Player __instance, out GameObject? __state) =>
+            __state = PlacementGhostController.CaptureActiveGhost(__instance);
+
+        [HarmonyPatch(nameof(Player.UpdatePlacement))]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.First)]
+        private static void UpdatePlacementPostfix(Player __instance, GameObject? __state, bool __runOriginal) =>
+            PlacementGhostController.RestoreGhostAfterUpdatePlacement(__instance, __state, __runOriginal);
+
         [HarmonyPatch(nameof(Player.SetSelectedPiece), typeof(Vector2Int))]
         [HarmonyPrefix]
         private static void SetSelectedPiecePrefix(Player __instance, Vector2Int p) =>
@@ -57,6 +70,13 @@ namespace MasterBuilderHeeler.Patches
         [HarmonyPriority(Priority.VeryHigh)]
         private static void UpdatePlacementGhostPostfix(Player __instance, bool flashGuardStone) =>
             PlacementGhostController.ApplyPrecisionGhostOffset(__instance, flashGuardStone);
+
+        // Last so a frozen ghost wins back its pose if another mods postfix moved it
+        [HarmonyPatch(nameof(Player.UpdatePlacementGhost))]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        private static void UpdatePlacementGhostFrozenPostfix(Player __instance) =>
+            PlacementGhostController.ReapplyFrozenGhostTransform(__instance);
 
         [HarmonyPatch(nameof(Player.CanRotatePiece))]
         [HarmonyPostfix]

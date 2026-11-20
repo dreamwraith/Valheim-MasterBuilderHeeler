@@ -213,6 +213,27 @@ namespace MasterBuilderHeeler.Core.Placement
             }
         }
 
+        public static GameObject? CaptureActiveGhost(Player player) =>
+            ModConfig.General.EnableMod.Value && player.m_placementGhost && player.m_placementGhost.activeSelf
+                ? player.m_placementGhost
+                : null;
+
+        // harmonyx 2.9 drops the foreach leave when any mod transpiles UpdatePlacement, so it falls into the hide
+        // block every frame and turns the ghost off. put it back here before Player.Update postfixes read it
+        public static void RestoreGhostAfterUpdatePlacement(Player player, GameObject? activeGhostBefore, bool runOriginal)
+        {
+            if (!runOriginal || !activeGhostBefore || !player.InPlaceMode() || player.IsDead())
+            {
+                return;
+            }
+
+            GameObject ghost = player.m_placementGhost;
+            if (ghost && ghost == activeGhostBefore && !ghost.activeSelf)
+            {
+                ghost.SetActive(true);
+            }
+        }
+
         public static void OnSelectedPieceChanging(Player player, Vector2Int pieceIndex)
         {
             if (ModConfig.General.EnableMod.Value &&
@@ -306,7 +327,7 @@ namespace MasterBuilderHeeler.Core.Placement
             // right now. validate it and skip the body or game drags the actual piece around
             if (PlacementValidator.IsValidatingEditedPiece)
             {
-                PlacementValidator.ValidateEditedGhostInPrefix(player, flashGuardStone);
+                PlacementValidator.ValidateGhost(player, flashGuardStone);
                 return false;
             }
 
@@ -360,6 +381,20 @@ namespace MasterBuilderHeeler.Core.Placement
             PlacementValidator.ValidateGhost(player, flashGuardStone);
         }
 
+        public static void ReapplyFrozenGhostTransform(Player player)
+        {
+            if (!ModConfig.General.EnableMod.Value || BuildStateManager.EditState != PlacementEditState.GhostFrozen)
+            {
+                return;
+            }
+
+            GameObject ghost = player.m_placementGhost;
+            if (ghost)
+            {
+                ApplyFrozenGhostTransform(ghost);
+            }
+        }
+
         private static void EndHammerSession()
         {
             if (BuildStateManager.EditState == PlacementEditState.InPlaceEdit)
@@ -378,13 +413,24 @@ namespace MasterBuilderHeeler.Core.Placement
 
         private static void ApplyFrozenGhostTransform(GameObject ghost)
         {
-            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(ghost.transform.rotation);
+            Transform ghostTransform = ghost.transform;
+            Vector3 currentPosition = ghostTransform.position;
+            Quaternion currentRotation = ghostTransform.rotation;
+            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(currentRotation);
             Vector3 resolvedPosition = ghost.TryGetComponent(out Piece ghostPiece)
-                ? PieceTranslationEngine.ResolveTargetPosition(ghostPiece, ghost.transform.position, resolvedRotation)
+                ? PieceTranslationEngine.ResolveTargetPosition(ghostPiece, currentPosition, resolvedRotation)
                 : BuildStateManager.FrozenGhostPosition;
 
-            ghost.transform.position = resolvedPosition;
-            ghost.transform.rotation = resolvedRotation;
+            if (currentPosition != resolvedPosition)
+            {
+                ghostTransform.position = resolvedPosition;
+            }
+
+            // Quaternion != skips rotations under ~0.16 deg so UltraFine 0.125x steps need Equals
+            if (!currentRotation.Equals(resolvedRotation))
+            {
+                ghostTransform.rotation = resolvedRotation;
+            }
         }
 
         private static void OnFeatureAvailabilityChanged(object sender, EventArgs eventArgs)
