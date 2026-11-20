@@ -43,7 +43,7 @@ Nudge, ghost freeze, in-place edit, and sampling need Precision Mode on. Grid ke
 - **Step presets and scaling:** Move through UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge steps and scale step sizes up or down on the fly. Starts on Fine. Standard matches the game's 22.5-degree rotation step.
 - **Ghost freeze and piece nudging:** Pin the placement ghost in place to inspect alignment from any angle and nudge pieces along Local or World axes.
 - **Grid snapping and overlay:** Snap piece pivots or manual snap points to a configurable World or piece-anchored Local grid, with an optional terrain-following or flat grid overlay drawn as Ribbon or Wireframe lines.
-- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, and health. Support is recalculated at the new position - unsupported pieces break. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu. Containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends (the placement ghost gets its rotation back afterward).
+- **In-place piece editing:** Move and rotate already-placed pieces without dismantling them while preserving container contents, sign text, item stand attachments, portal tags, and health. The edited piece highlights during the edit (`EditHighlightColor`, red when invalid). Support is recalculated at the new position - unsupported pieces break. Honors ward access, no-build zones, and crafting station rules. The piece must be in the equipped tool's build menu. Containers stay locked during an edit. Place, repair, dismantle, copy, and the build menu are disabled until the edit ends (the placement ghost gets its rotation back afterward).
 - **Placement rules:** Snapped, nudged, frozen, and edited pieces skip the base game rules for wood surfaces, floors, ceilings, non-supporting pieces, and required connections. Other base game placement rules still apply and unsupported pieces still break. Build Camera range can technically exceed active loaded zones. A placement check prevents placing outside the active zone.
 - **Piece and rotation sampling:** Select the aimed piece directly in the active build menu or copy a placed piece's 3D rotation onto the active ghost. `PrecisionCopyBehavior` sets how the sample keys work with the base game Copy Piece.
 - **Build reach:** `EnableExtendedAvatarReach` extends player placement, repair, dismantle, and in-place edit reach to `MaxBuildReachDistance`. `ValidateStationRangeAtPieceLocation` checks crafting station range at the target piece instead of the player. Both are off by default. `MaxBuildReachDistance` limits extended player reach and in-place edit, sampling, and hover targeting. Build Camera reach is the game's 50m raycast, otherwise limited by `BuildCameraTetherRadius` and workbench range at the piece. The Build Camera always checks station range at the target piece.
@@ -61,7 +61,7 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 | Section | Sync Policy | Description |
 | :--- | :--- | :--- |
 | `General` | Conditional (Server) / Client | Master enable toggle, feature toggles, extended build reach, station range rules, hovered piece build tool requirement, and log level. |
-| `Precision Settings` | Conditional (Client) | Default Precision and Roof Mode states, copy behavior, plus UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge step sizes. |
+| `Precision Settings` | Conditional (Client) / Client | Default Precision and Roof Mode states, copy behavior, in-place edit highlight color, plus UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge step sizes. |
 | `Gizmo Settings` | Client | Gizmo style, scale, and lighting, plus color and opacity settings for the 3D gizmo rings and arrows. The Precision panel axis and nudge symbols use the same colors. |
 | `Grid Settings` | Conditional (Client) / Client | Default grid cell size, optional vertical snap, and grid overlay style, radius, height offsets, colors, and Ribbon line widths. |
 | `Build Camera` | Conditional (Server) / Conditional (Client) / Client | Tether radius, collision toggle, `MaxBuildReachDistance`, movement speeds, mouse sensitivity, and camera smoothing. |
@@ -141,7 +141,6 @@ Step sizes, grid overlay, camera feel, spotlight, panel layout, and colors are s
 Tested with MasterBuilderHeeler:
 
 - [**Extra Snap Points Made Easy**](https://thunderstore.io/c/valheim/p/Searica/Extra_Snap_Points_Made_Easy/) by [Searica](https://thunderstore.io/c/valheim/p/Searica)
-  - Known issue: with its Manual, Manual+, or Grid snap mode on, a frozen ghost keeps snapping to whatever you're aiming at. Press the same key again to go back to Auto. Manual+ is on CapsLock by default, so it's easy to hit by accident. Working with Searica on a fix.
 - [**Advanced Terrain Modifiers**](https://thunderstore.io/c/valheim/p/Searica/AdvancedTerrainModifiers/) by [Searica](https://thunderstore.io/c/valheim/p/Searica)
 
 ### Incompatible Mods
@@ -150,7 +149,6 @@ MasterBuilderHeeler does not load when any of these mods is installed. Check the
 
 - **Perfect Placement:** Overlaps placement, rotation, in-place editing, and grid alignment.
 - **Build Camera Custom Hammers Edition:** Overlaps the Build Camera.
-- **Infinity Hammer:** Precision rotation and nudge just don't work with it installed. It's not really either mod's fault, it's a [HarmonyX bug](https://github.com/BepInEx/HarmonyX/issues/65) in the version BepInEx ships, and Infinity Hammer's patch on the game's placement code happens to set it off. BepInEx isn't updating HarmonyX on 5.x, so this stays blocked unless Infinity Hammer changes how it patches that method to avoid user confusion.
 
 ### Overlapping Mods
 

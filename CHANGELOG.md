@@ -5,6 +5,26 @@ All notable changes to **MasterBuilderHeeler** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-11-19
+
+### Added
+
+- Pieces being edited in place highlight pink by default - change it with `EditHighlightColor` in `Precision Settings`.
+  Invalid spots show red.
+
+### Fixed
+
+- Precision rotation, nudge and the Placement panel work alongside Seasons 1.10.5 and other mods that patch placement.
+  Thanks, Kalikars.
+- In-place edits show the piece moving and rotating live with FiresEasyBakeMeshes or Valheim Community Patch - no more
+  stale mesh sitting there until commit.
+- Frozen ghosts and edited pieces stay where they belong when Extra Snap Points Made Easy is in Manual, Manual+ or Grid
+  mode.
+
+### Removed
+
+- Hard incompatibility block on Infinity Hammer.
+
 ## [2.0.0] - 2026-11-12
 
 ### Added
