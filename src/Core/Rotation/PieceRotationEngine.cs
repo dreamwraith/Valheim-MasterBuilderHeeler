@@ -137,7 +137,10 @@ namespace MasterBuilderHeeler.Core.Rotation
             _dirtyFromNativeScroll = false;
             string prefabName = Utils.GetPrefabName(targetPiece.gameObject);
             Quaternion targetRotation = targetPiece.transform.rotation;
-            SyncRotatorsFromBasis(targetRotation, BuildFrameBasis.IsCornerRoofPrefab(prefabName));
+            // a corner roof only carries the extra 45 degrees while roof mode is on. with it off the piece sits on the
+            // standard basis like everything else
+            bool isRoofBasis = BuildStateManager.IsRoofModeActive && BuildFrameBasis.IsCornerRoofPrefab(prefabName);
+            SyncRotatorsFromBasis(targetRotation, isRoofBasis);
             if (ModConfig.IsDebugLogging)
             {
                 Plugin.LogDebug($"[PieceRotationEngine] Matched rotation from piece {prefabName}: {targetRotation.eulerAngles}");
