@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MasterBuilderHeeler.Configuration;
 using MasterBuilderHeeler.Core.State;
+using MasterBuilderHeeler.Utilities;
 using UnityEngine;
 
 namespace MasterBuilderHeeler.Core.Validation
@@ -81,16 +82,7 @@ namespace MasterBuilderHeeler.Core.Validation
                 _isValidatingEditedPiece = false;
 
                 // another mods postfix can move m_placementGhost (the real edited piece here), put it back
-                if (editedTransform.position != savedPosition)
-                {
-                    editedTransform.position = savedPosition;
-                }
-
-                // Equals avoids the ~0.16 deg Quaternion != dead band
-                if (!editedTransform.rotation.Equals(savedRotation))
-                {
-                    editedTransform.rotation = savedRotation;
-                }
+                PieceUtils.SetPoseIfChanged(editedTransform, savedPosition, savedRotation);
             }
 
             Player.PlacementStatus finalStatus = player.m_placementStatus;

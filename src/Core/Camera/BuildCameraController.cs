@@ -9,6 +9,8 @@ namespace MasterBuilderHeeler.Core.Camera
     {
         private static bool _isInitialized;
         private static bool _wasBoundaryClamped;
+        private static Vector3 _flightPosition;
+        private static Quaternion _flightRotation;
 
         public static void Deactivate()
         {
@@ -66,6 +68,20 @@ namespace MasterBuilderHeeler.Core.Camera
             }
         }
 
+        // workaround for azumatts firstpersonmode. its UpdateCamera postfix still runs when my prefix skips the method
+        // and moves the camera back to the player every frame, so the pose goes on from a Last postfix and not the prefix
+        public static void ApplyFlightPose(GameCamera camera)
+        {
+            if (_isInitialized)
+            {
+                camera.transform.SetPositionAndRotation(_flightPosition, _flightRotation);
+                // UpdateCamera is skipped while flying, drop the near plane or the camera clips into whatever it runs into
+                // this is a bit of a hack, but it works and is reverted when the camera is deactivated
+                // firstpersonmode calls GetCameraPosition in third person and that runs UpdateNearClipping, so its set every frame
+                camera.m_camera.nearClipPlane = camera.m_nearClipPlaneMin;
+            }
+        }
+
         private static void InitializeFlight(Player player, GameCamera camera)
         {
             Vector3 anchorPosition = player.transform.position;
@@ -77,9 +93,6 @@ namespace MasterBuilderHeeler.Core.Camera
             }
 
             camera.transform.position = startPosition;
-            // UpdateCamera is skipped while flying, drop the near plane or the camera clips into whatever it runs into.
-            // this is a bit of a hack, but it works and is reverted when the camera is deactivated.
-            camera.m_camera.nearClipPlane = camera.m_nearClipPlaneMin;
             BuildCameraPhysics.Initialize(startPosition, camera.transform.rotation);
             _isInitialized = true;
             _wasBoundaryClamped = false;
@@ -117,8 +130,8 @@ namespace MasterBuilderHeeler.Core.Camera
             Vector3 tetheredPosition = ClampToAvatarTether(intendedPosition, player.transform.position);
             Vector3 resolvedPosition = BuildCameraPhysics.ResolveWorldCollision(currentPosition, tetheredPosition);
 
-            cameraTransform.position = resolvedPosition;
-            cameraTransform.rotation = targetRotation;
+            _flightPosition = resolvedPosition;
+            _flightRotation = targetRotation;
 
             BuildCameraRig.UpdateRig(player, cameraTransform);
             BuildCameraAutoPickup.ScanAndCollect(player, resolvedPosition);

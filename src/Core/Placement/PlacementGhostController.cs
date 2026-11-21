@@ -414,23 +414,12 @@ namespace MasterBuilderHeeler.Core.Placement
         private static void ApplyFrozenGhostTransform(GameObject ghost)
         {
             Transform ghostTransform = ghost.transform;
-            Vector3 currentPosition = ghostTransform.position;
-            Quaternion currentRotation = ghostTransform.rotation;
-            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(currentRotation);
+            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(ghostTransform.rotation);
             Vector3 resolvedPosition = ghost.TryGetComponent(out Piece ghostPiece)
-                ? PieceTranslationEngine.ResolveTargetPosition(ghostPiece, currentPosition, resolvedRotation)
+                ? PieceTranslationEngine.ResolveTargetPosition(ghostPiece, ghostTransform.position, resolvedRotation)
                 : BuildStateManager.FrozenGhostPosition;
 
-            if (currentPosition != resolvedPosition)
-            {
-                ghostTransform.position = resolvedPosition;
-            }
-
-            // Quaternion != skips rotations under ~0.16 deg so UltraFine 0.125x steps need Equals
-            if (!currentRotation.Equals(resolvedRotation))
-            {
-                ghostTransform.rotation = resolvedRotation;
-            }
+            PieceUtils.SetPoseIfChanged(ghostTransform, resolvedPosition, resolvedRotation);
         }
 
         private static void OnFeatureAvailabilityChanged(object sender, EventArgs eventArgs)

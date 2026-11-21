@@ -140,21 +140,9 @@ namespace MasterBuilderHeeler.Core.Placement
             }
 
             Transform pieceTransform = piece.transform;
-            Quaternion currentRotation = pieceTransform.rotation;
-            Vector3 currentPosition = pieceTransform.position;
-
-            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(currentRotation);
-            // Quaternion != skips rotations under ~0.16 deg so UltraFine 0.125x steps need Equals
-            if (!currentRotation.Equals(resolvedRotation))
-            {
-                pieceTransform.rotation = resolvedRotation;
-            }
-
-            Vector3 resolvedPosition = PieceTranslationEngine.ResolveTargetPosition(piece, currentPosition, resolvedRotation);
-            if (currentPosition != resolvedPosition)
-            {
-                pieceTransform.position = resolvedPosition;
-            }
+            Quaternion resolvedRotation = PieceRotationEngine.ResolveTargetRotation(pieceTransform.rotation);
+            Vector3 resolvedPosition = PieceTranslationEngine.ResolveTargetPosition(piece, pieceTransform.position, resolvedRotation);
+            PieceUtils.SetPoseIfChanged(pieceTransform, resolvedPosition, resolvedRotation);
 
             PlacementValidator.ValidateEditedPiece(player, piece, false);
         }
