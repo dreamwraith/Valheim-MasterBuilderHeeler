@@ -40,6 +40,7 @@ MasterBuilderHeeler draws inspiration from the following Valheim mods and commun
 Nudge, ghost freeze, in-place edit, and sampling need Precision Mode on. Grid keys work without it. Piece rotation, Precision and Roof Mode, frames, step, and grid settings stay how you left them when you put the hammer away or teleport. Only the nudge offset clears. Logging in or dying puts everything back to the configured defaults - `ResetBuildSettingsKey` (F10) does the same for everything but Precision Mode. Set your preferred starting values under the `Default` settings.
 
 - **3-axis rotation:** Rotate pieces across yaw, pitch, and roll in World or Local frames with a 3D ring gizmo in a lit Solid or a Wireframe style, plus Corner Roof alignment for 45-degree roof slopes. Terrain tool pieces keep the base game rotation.
+- **Mirror and flip:** Mirror a piece left to right across the grid line nearest to where you're looking with `MirrorPieceRotationKey` (`'`) - a piece leaning `\` comes out `/`. It mirrors the rotation only - a piece that isn't the same on both sides won't turn into its mirror image. For a build that sits at an angle to the world, anchor the Local grid to one of its pieces first. `FlipActiveAxisKey` (`/`) gives a quick half turn on the active axis.
 - **Step presets and scaling:** Move through UltraFine, ExtraFine, Fine, Standard, and Coarse rotation and nudge steps and scale step sizes up or down on the fly. Starts on Fine. Standard matches the game's 22.5-degree rotation step.
 - **Ghost freeze and piece nudging:** Pin the placement ghost in place to inspect alignment from any angle and nudge pieces along Local or World axes.
 - **Grid snapping and overlay:** Snap piece pivots or manual snap points to a configurable World or piece-anchored Local grid, with an optional terrain-following or flat grid overlay drawn as Ribbon or Wireframe lines.
@@ -82,7 +83,7 @@ Settings, keybindings, panel positions, and theme colors can be changed live usi
 
 ### Gamepad
 
-Works with all three of the game's controller layouts. The base game build controls stay where they are. Hold the layer button (X by default) and press another button for the actions below, or tap it for a build radial with everything else - Precision Mode, rotation and nudge frames, resets, step presets and scale, grid, sampling, in-place edit, and the Build Camera.
+Works with all three of the game's controller layouts. The base game build controls stay where they are. Hold the layer button (X by default) and press another button for the actions below, or tap it for a build radial with everything else - Precision Mode, rotation and nudge frames, resets, mirror and flip, step presets and scale, grid, sampling, in-place edit, and the Build Camera.
 
 | Input | Action |
 | :--- | :--- |

@@ -5,6 +5,20 @@ All notable changes to **MasterBuilderHeeler** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-11-21
+
+### Added
+
+- Mirror key (`'`) flips a piece left to right across the grid line nearest the view - a piece leaning `\` comes out
+  `/`. For a build that sits at an angle to the world, anchor the Local grid to one of its pieces first.
+- Flip key (`/`) for a quick half turn on the active axis.
+
+### Fixed
+
+- Build Camera no longer freezes with FirstPersonMode installed. Thanks, Kalikars.
+- No more fuzzy, glitchy Solid gizmo with anti-aliasing on. Doubled the gloss now that the flicker is gone.
+- Corner roofs no longer turn 45 degrees when edited in place or sampled with Roof Mode off.
+
 ## [2.1.0] - 2026-11-19
 
 ### Added
