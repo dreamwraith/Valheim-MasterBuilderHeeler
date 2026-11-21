@@ -23,9 +23,9 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Solid
         // color all over a tube so any more and it stops looking round
         private const float Glow = 0.2f;
         // the piece shader multiplies this by one plus the rgb of the texture. no texture reads as white so it lights
-        // with four times this. low because the games anti aliasing flickers on the thin highlight a shiny tube gets
-        private const float ActiveGlossiness = 0.1125f;
-        private const float InactiveGlossiness = 0.05f;
+        // with four times this
+        private const float ActiveGlossiness = 0.225f;
+        private const float InactiveGlossiness = 0.1f;
         // one above the grid overlay like the wireframe gizmo. the game fogs opaque stuff right before this queue and
         // its anti aliasing only does solid geometry, so whats drawn here gets no fog and hard edges that dont flicker
         private const int LateRenderQueue = 3101;
@@ -92,7 +92,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Solid
                 SetSurface(color * InactiveBrightness, InactiveGlossiness);
             }
 
-            Draw(ring.Mesh!, matrix);
+            Draw(ring, matrix);
         }
 
         // three arrow meshes and not one because the baked overhead light hits each direction differently
@@ -105,7 +105,7 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Solid
             }
 
             SetSurface(color, InactiveGlossiness);
-            Draw(arrow.Mesh!, matrix);
+            Draw(arrow, matrix);
         }
 
         private static void EnsureMeshes(Part[] parts, string namePrefix)
@@ -216,10 +216,23 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Solid
             _propertyBlock.SetFloat(GlossinessPropertyId, glossiness);
         }
 
-        private void Draw(Mesh mesh, Matrix4x4 matrix)
+        private void Draw(Part part, Matrix4x4 matrix)
         {
-            Material material = UseLighting ? _litMaterial! : _unlitMaterial!;
-            Graphics.DrawMesh(mesh, matrix, material, 0, null, 0, _propertyBlock, castShadows: false, receiveShadows: false);
+            // the games taa reads motion vectors. DrawMesh hands unity an identity matrix as last frames position,
+            // RenderMesh takes the real one. a part that wasnt drawn last frame gets its current matrix, no motion
+            int frame = Time.frameCount;
+            Matrix4x4 previousMatrix = part.LastDrawFrame == frame - 1 ? part.LastDrawMatrix : matrix;
+            part.LastDrawMatrix = matrix;
+            part.LastDrawFrame = frame;
+
+            RenderParams renderParams = new RenderParams(UseLighting ? _litMaterial : _unlitMaterial)
+            {
+                matProps = _propertyBlock,
+                motionVectorMode = MotionVectorGenerationMode.Object,
+                // DrawMesh blended light probes, RenderParams starts with them off
+                lightProbeUsage = LightProbeUsage.BlendProbes
+            };
+            Graphics.RenderMesh(in renderParams, part.Mesh!, 0, matrix, previousMatrix);
         }
 
         private sealed class Part
@@ -227,6 +240,8 @@ namespace MasterBuilderHeeler.Core.Visuals.Gizmo.Themes.Solid
             public Mesh? Mesh;
             public float TubeRadius;
             public Vector3 Light;
+            public Matrix4x4 LastDrawMatrix;
+            public int LastDrawFrame = -1;
         }
     }
 }
