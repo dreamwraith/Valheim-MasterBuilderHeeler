@@ -18,7 +18,7 @@ namespace MasterBuilderHeeler.Core.Input
     public static class BuildActions
     {
         // static fields get set top to bottom so this has to stay above the actions
-        private static readonly List<BuildAction> Actions = new List<BuildAction>(38);
+        private static readonly List<BuildAction> Actions = new List<BuildAction>(40);
 
         private static readonly Func<bool> IsPrecisionActive = () => BuildStateManager.IsPrecisionModeActive;
         private static readonly Func<bool> CanTogglePrecision = () =>
@@ -172,6 +172,22 @@ namespace MasterBuilderHeeler.Core.Input
             KeyCode.Backspace,
             "Resets piece rotation on all axes.",
             _ => PieceRotationEngine.ResetAllRotators(),
+            IsPrecisionActive));
+
+        public static readonly BuildAction MirrorPieceRotation = Add(new BuildAction(
+            "MirrorPieceRotation",
+            "Mirror Piece Rotation",
+            KeyCode.Quote,
+            "Mirrors the piece rotation left to right across the grid line nearest to the view direction. Anchor the Local Grid to a piece of the build first if the build is turned relative to the world.",
+            player => PieceRotationEngine.MirrorRotation(player),
+            IsPrecisionActive));
+
+        public static readonly BuildAction FlipActiveAxis = Add(new BuildAction(
+            "FlipActiveAxis",
+            "Flip Active Axis",
+            KeyCode.Slash,
+            "Turns the piece 180 degrees on the selected axis.",
+            player => PieceRotationEngine.FlipAxis(player, BuildStateManager.ActiveAxis),
             IsPrecisionActive));
 
         public static readonly BuildAction NudgeForward = Add(new BuildAction(

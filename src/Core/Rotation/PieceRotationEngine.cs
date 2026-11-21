@@ -2,6 +2,7 @@ using MasterBuilderHeeler.Configuration;
 using MasterBuilderHeeler.Core.Placement;
 using MasterBuilderHeeler.Core.Rotation.Rotators;
 using MasterBuilderHeeler.Core.State;
+using MasterBuilderHeeler.Utilities;
 using UnityEngine;
 
 namespace MasterBuilderHeeler.Core.Rotation
@@ -49,13 +50,7 @@ namespace MasterBuilderHeeler.Core.Rotation
 
         public static void UpdatePlacementInput(Player player, int rotationStepSign)
         {
-            GameObject? targetObject = BuildStateManager.GetActiveTargetObject(player);
-            RefreshTargetMetadata(targetObject);
-
-            if (!targetObject ||
-                !targetObject.activeInHierarchy ||
-                BuildStateManager.IsTerrainOpTarget ||
-                rotationStepSign == 0)
+            if (!TryGetRotatableTarget(player, out _) || rotationStepSign == 0)
             {
                 return;
             }
@@ -75,9 +70,7 @@ namespace MasterBuilderHeeler.Core.Rotation
             }
 
             float signedStep = BuildStateManager.GetActiveRotationStep() * rotationStepSign;
-            IRotator activeRotator = GetActiveRotator();
-            ApplyAxisSteps(activeRotator, currentAxis, signedStep);
-            SyncInactiveRotators(activeRotator);
+            IRotator activeRotator = RotateActiveRotator(currentAxis, signedStep);
 
             if (ModConfig.IsDebugLogging)
             {
@@ -192,22 +185,86 @@ namespace MasterBuilderHeeler.Core.Rotation
             }
         }
 
-        private static void ApplyAxisSteps(IRotator rotator, RotationAxis axes, float signedStep)
+        public static void FlipAxis(Player player, RotationAxis axis)
         {
+            if (!TryGetRotatableTarget(player, out _))
+            {
+                return;
+            }
+
+            IRotator activeRotator = RotateActiveRotator(axis, 180f);
+
+            if (ModConfig.IsDebugLogging)
+            {
+                Plugin.LogDebug($"[PieceRotationEngine] Flipped axis {axis} 180 deg (rotator={activeRotator.Name}).");
+            }
+        }
+
+        // left to right mirror across a vertical plane. the plane runs along whichever grid line the camera looks down
+        // so the angles stay on the grid. LocalGridRotation is identity while the grid frame is World
+        public static void MirrorRotation(Player player)
+        {
+            UnityEngine.Camera? activeCamera = CameraUtils.GetActiveCamera();
+            if (!activeCamera || !TryGetRotatableTarget(player, out GameObject targetObject))
+            {
+                return;
+            }
+
+            Quaternion gridBasis = BuildStateManager.LocalGridRotation;
+            Vector3 gridRight = gridBasis * Vector3.right;
+            Vector3 gridForward = gridBasis * Vector3.forward;
+            Vector3 viewRight = activeCamera.transform.right;
+            Vector3 planeNormal = Mathf.Abs(Vector3.Dot(viewRight, gridRight)) >= Mathf.Abs(Vector3.Dot(viewRight, gridForward))
+                ? gridRight
+                : gridForward;
+
+            // forward and up get reflected and LookRotation builds the rotation back from them, so the piece keeps its
+            // own left and right sides. a piece thats not the same on both sides doesnt come out as a true mirror image
+            Quaternion rotation = targetObject.transform.rotation;
+            // wood and darkwood corner roofs are the same on both sides of their diagonal and not left to right, so the
+            // right axis goes in as the new forward and that swaps the two wings. a grausten corner is only half a
+            // corner and its other half is a different piece, so the same math turns it into the other half of the
+            // mirrored corner
+            Vector3 forwardSourceAxis = BuildStateManager.IsCornerRoofTarget ? Vector3.right : Vector3.forward;
+            Quaternion mirroredRotation = Quaternion.LookRotation(
+                Vector3.Reflect(rotation * forwardSourceAxis, planeNormal),
+                Vector3.Reflect(rotation * Vector3.up, planeNormal));
+            SetAllRotators(mirroredRotation);
+
+            if (ModConfig.IsDebugLogging)
+            {
+                Plugin.LogDebug($"[PieceRotationEngine] Mirrored rotation {rotation.eulerAngles} to {mirroredRotation.eulerAngles} across plane normal {planeNormal}.");
+            }
+        }
+
+        // true when theres a target on screen the rotators can turn. refreshes the target classification first
+        private static bool TryGetRotatableTarget(Player player, out GameObject targetObject)
+        {
+            targetObject = BuildStateManager.GetActiveTargetObject(player)!;
+            RefreshTargetMetadata(targetObject);
+            return targetObject && targetObject.activeInHierarchy && !BuildStateManager.IsTerrainOpTarget;
+        }
+
+        private static IRotator RotateActiveRotator(RotationAxis axes, float signedStep)
+        {
+            IRotator activeRotator = GetActiveRotator();
             if ((axes & RotationAxis.Pitch) != 0)
             {
-                rotator.Rotate(Vector3.right, signedStep);
+                activeRotator.Rotate(Vector3.right, signedStep);
             }
 
             if ((axes & RotationAxis.Yaw) != 0)
             {
-                rotator.Rotate(Vector3.up, signedStep);
+                activeRotator.Rotate(Vector3.up, signedStep);
             }
 
             if ((axes & RotationAxis.Roll) != 0)
             {
-                rotator.Rotate(Vector3.forward, signedStep);
+                activeRotator.Rotate(Vector3.forward, signedStep);
             }
+
+            SyncInactiveRotators(activeRotator);
+            return activeRotator;
         }
 
         private static void SyncRotatorsFromBasis(Quaternion rotation, bool isRoofBasis)

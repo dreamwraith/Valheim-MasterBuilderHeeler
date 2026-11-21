@@ -7,7 +7,7 @@ namespace MasterBuilderHeeler.Core.UI
 {
     public abstract class HudKeymapPanel : HudPanelBase
     {
-        private readonly List<HudKeymapRow> _keymapRows = new List<HudKeymapRow>(18);
+        private readonly List<HudKeymapRow> _keymapRows = new List<HudKeymapRow>(20);
 
         protected HudKeymapPanel(
             Transform parentTransform,

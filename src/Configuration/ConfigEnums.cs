@@ -69,6 +69,8 @@ namespace MasterBuilderHeeler.Configuration
         RollAxis,
         ResetAxis,
         ResetAllAxes,
+        MirrorRotation,
+        FlipAxis,
         NudgeFrame,
         Nudge,
         ResetNudge,

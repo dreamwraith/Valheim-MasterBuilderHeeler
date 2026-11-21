@@ -20,7 +20,9 @@ namespace MasterBuilderHeeler.Core.UI.Radial
                 BuildRadialEntry.Toggle("Rotation Frame", BuildActions.CycleRotationFrame, () => BuildStateManager.ActiveRotationFrame.ToString()),
                 BuildRadialEntry.Toggle("Roof Mode", BuildActions.ToggleRoofMode, () => FormatOnOff(BuildStateManager.IsRoofModeActive)),
                 BuildRadialEntry.OneShot("Reset Axis", BuildActions.ResetActiveAxis, () => BuildStateManager.ActiveAxis.ToString()),
-                BuildRadialEntry.OneShot("Reset All Axes", BuildActions.ResetAllAxes)
+                BuildRadialEntry.OneShot("Reset All Axes", BuildActions.ResetAllAxes),
+                BuildRadialEntry.OneShot("Mirror Rotation", BuildActions.MirrorPieceRotation),
+                BuildRadialEntry.OneShot("Flip Axis", BuildActions.FlipActiveAxis, () => BuildStateManager.ActiveAxis.ToString())
             });
 
             BuildRadialPage nudgePage = new BuildRadialPage("Nudge", new[]

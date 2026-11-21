@@ -12,10 +12,6 @@ namespace MasterBuilderHeeler.Core.UI.Panels
         private static readonly Func<bool> ShowsRotation = () => !BuildStateManager.IsTerrainOpGhostActive;
         private static readonly Func<bool> ShowsRoofMode = () =>
             !BuildStateManager.IsTerrainOpGhostActive && BuildStateManager.IsCornerRoofTarget;
-        // the symbol on the reset axis row only shows which axis the key resets. thats not a status so the row
-        // still goes away when its key is hidden
-        private static readonly Func<bool> ShowsResetAxis = () =>
-            !BuildStateManager.IsTerrainOpGhostActive && ModConfig.Hud.Get(PrecisionKeymapRow.ResetAxis).ShowKeymap.Value;
 
         private readonly HudLabelRow _stepSummaryRow;
 
@@ -52,10 +48,10 @@ namespace MasterBuilderHeeler.Core.UI.Panels
                 AxisIndicator(RotationAxis.Pitch, HudGlyphs.PitchInactive));
             Row(PrecisionKeymapRow.RollAxis, BuildActions.SelectRollAxis, ShowsRotation,
                 AxisIndicator(RotationAxis.Roll, HudGlyphs.CircleHollow));
-            Row(PrecisionKeymapRow.ResetAxis, BuildActions.ResetActiveAxis, ShowsResetAxis,
-                new HudIndicator(() => FormatAxisSymbol(BuildStateManager.ActiveAxis), () => FormatAxisSymbol(RotationAxis.Pitch)),
-                FormatResetAxisLabel);
+            ActiveAxisRow(PrecisionKeymapRow.ResetAxis, BuildActions.ResetActiveAxis, "Reset");
             Row(PrecisionKeymapRow.ResetAllAxes, BuildActions.ResetAllAxes, ShowsRotation);
+            Row(PrecisionKeymapRow.MirrorRotation, BuildActions.MirrorPieceRotation, ShowsRotation);
+            ActiveAxisRow(PrecisionKeymapRow.FlipAxis, BuildActions.FlipActiveAxis, "Flip");
             Row(PrecisionKeymapRow.NudgeFrame, BuildActions.CycleTranslationFrame,
                 indicator: HudIndicator.Choice(
                     () => BuildStateManager.ActiveTranslationFrame == TranslationFrame.World,
@@ -178,9 +174,6 @@ namespace MasterBuilderHeeler.Core.UI.Panels
                 () => FormatAxisSymbol(axis),
                 () => inactiveGlyph);
 
-        private static string FormatResetAxisLabel() =>
-            $"Reset {BuildStateManager.ActiveAxis}:";
-
         private static string FormatStepPips(StepPreset activePreset)
         {
             string pips = string.Empty;
@@ -216,6 +209,17 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             HudIndicator? indicator = null,
             string? label = null) =>
             AddKeymapRow(ModConfig.Hud.Get(row), getKeyText, isVisible: isVisible, indicator: indicator, label: label);
+
+        // for a key that acts on the selected axis. the symbol only shows which axis that is. thats not a status so
+        // the row still goes away when its key is hidden
+        private void ActiveAxisRow(PrecisionKeymapRow row, BuildAction action, string verb)
+        {
+            KeymapRowSetting setting = ModConfig.Hud.Get(row);
+            Row(row, action,
+                () => ShowsRotation() && setting.ShowKeymap.Value,
+                new HudIndicator(() => FormatAxisSymbol(BuildStateManager.ActiveAxis), () => FormatAxisSymbol(RotationAxis.Pitch)),
+                () => $"{verb} {BuildStateManager.ActiveAxis}:");
+        }
 
         private void PreseedConstantWidth()
         {
