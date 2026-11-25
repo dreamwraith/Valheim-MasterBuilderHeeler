@@ -21,7 +21,7 @@ namespace MasterBuilderHeeler.Utilities
             return showPrefab ? $"{displayName} ({prefabName})" : displayName;
         }
 
-        // writes only what changed. Quaternion != skips rotations under ~0.16 deg so UltraFine 0.125x steps need Equals
+        // writes only what changed. Quaternion != skips rotations under ~0.16 deg so the rotation check is Equals
         // unity also normalizes a rotation on every set, so writing back one that was just read can shift its last bits
         public static void SetPoseIfChanged(Transform targetTransform, Vector3 position, Quaternion rotation)
         {

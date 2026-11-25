@@ -57,8 +57,6 @@ namespace MasterBuilderHeeler.Configuration
 
             HudColors = new HudColorConfig(new ConfigSection(config, "HUD Colors"));
 
-            ConfigMigration.MigrateMovedSections(config);
-
             config.Save();
             config.SaveOnConfigSet = true;
         }

@@ -86,7 +86,7 @@ namespace MasterBuilderHeeler.Core.UI.Panels
             if (showRotation)
             {
                 euler = (BuildStateManager.IsPrecisionModeActive || BuildStateManager.EditState != PlacementEditState.Normal)
-                    ? PieceRotationEngine.GetActiveRotator().GetEulerAngles()
+                    ? PieceRotationEngine.GetSnappedEulerAngles()
                     : rotation.eulerAngles;
             }
 

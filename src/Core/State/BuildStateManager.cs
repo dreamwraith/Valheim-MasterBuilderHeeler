@@ -227,7 +227,10 @@ namespace MasterBuilderHeeler.Core.State
                 StepPreset.Coarse => ModConfig.Build.RotationStepCoarse.Value,
                 _ => ModConfig.Build.RotationStepStandard.Value
             };
-            return baseStep * StepMultiplier;
+            // world save rounds to 0.5 degrees so smaller or fractional steps get lost on reload
+            return Mathf.Max(
+                MathUtils.SnapScalar(baseStep * StepMultiplier, MathUtils.SavedRotationStep),
+                MathUtils.SavedRotationStep);
         }
 
         public static float GetActiveTranslationStep()

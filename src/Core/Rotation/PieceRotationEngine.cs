@@ -105,10 +105,21 @@ namespace MasterBuilderHeeler.Core.Rotation
 
             if (BuildStateManager.IsPrecisionModeActive || BuildStateManager.EditState != PlacementEditState.Normal)
             {
-                return GetActiveRotator().GetRotation();
+                return ResolveSavedRotation();
             }
 
             return nativeRotation;
+        }
+
+        public static Vector3 GetSnappedEulerAngles() =>
+            MathUtils.SnapEulerToSaveGrid(GetActiveRotator().GetEulerAngles());
+
+        // only snap the output so local and roof rotator state stays exact across steps
+        private static Quaternion ResolveSavedRotation()
+        {
+            Quaternion snappedRotation = Quaternion.Euler(GetSnappedEulerAngles());
+            // SetRotation stores eulerAngles from the quaternion and unity can read back a different angle set so snap again
+            return Quaternion.Euler(MathUtils.SnapEulerToSaveGrid(snappedRotation.eulerAngles));
         }
 
         public static void SyncFromNativeScrollIfDirty(Player player)

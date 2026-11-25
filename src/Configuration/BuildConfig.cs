@@ -22,23 +22,23 @@ namespace MasterBuilderHeeler.Configuration
             "Sets how base game Copy Piece and the sample keys operate while Precision Mode is on (SideBySide = keep both, OverrideNative = base game copy also copies full rotation, DisableNative = sample keys only, DisableCustom = base game copy only).");
 
         public ConfigEntry<float> RotationStepUltraFine { get; } = precision.Conditional("RotationStepUltraFine", 1.0f,
-            "Rotation step in degrees when the UltraFine step preset is active.",
-            new AcceptableValueRange<float>(0.1f, 5.0f));
+            "Rotation step in degrees when the UltraFine step preset is active. Rounds to the nearest 0.5 degrees to match the world save.",
+            new AcceptableValueRange<float>(0.5f, 5.0f));
 
         public ConfigEntry<float> RotationStepExtraFine { get; } = precision.Conditional("RotationStepExtraFine", 2.5f,
-            "Rotation step in degrees when the ExtraFine step preset is active.",
+            "Rotation step in degrees when the ExtraFine step preset is active. Rounds to the nearest 0.5 degrees to match the world save.",
             new AcceptableValueRange<float>(0.5f, 10.0f));
 
         public ConfigEntry<float> RotationStepFine { get; } = precision.Conditional("RotationStepFine", 7.5f,
-            "Rotation step in degrees when the Fine step preset is active.",
+            "Rotation step in degrees when the Fine step preset is active. Rounds to the nearest 0.5 degrees to match the world save.",
             new AcceptableValueRange<float>(1.0f, 15.0f));
 
         public ConfigEntry<float> RotationStepStandard { get; } = precision.Conditional("RotationStepStandard", 22.5f,
-            "Rotation step in degrees when the Standard step preset is active.",
+            "Rotation step in degrees when the Standard step preset is active. Rounds to the nearest 0.5 degrees to match the world save.",
             new AcceptableValueRange<float>(5.0f, 45.0f));
 
         public ConfigEntry<float> RotationStepCoarse { get; } = precision.Conditional("RotationStepCoarse", 45.0f,
-            "Rotation step in degrees when the Coarse step preset is active.",
+            "Rotation step in degrees when the Coarse step preset is active. Rounds to the nearest 0.5 degrees to match the world save.",
             new AcceptableValueRange<float>(15.0f, 90.0f));
 
         public ConfigEntry<float> TranslationStepUltraFine { get; } = precision.Conditional("TranslationStepUltraFine", 0.02f,

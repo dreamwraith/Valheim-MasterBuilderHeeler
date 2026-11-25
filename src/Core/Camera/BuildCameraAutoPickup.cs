@@ -63,7 +63,7 @@ namespace MasterBuilderHeeler.Core.Camera
 
                 if (!player.m_inventory.CanAddItem(itemDrop.m_itemData, itemDrop.m_itemData.m_stack))
                 {
-                    ShowDebouncedAlert("$msg_inventoryfull");
+                    ShowDebouncedAlert("$inventory_full");
                     continue;
                 }
 
