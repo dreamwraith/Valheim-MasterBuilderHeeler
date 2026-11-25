@@ -5,6 +5,23 @@ All notable changes to **MasterBuilderHeeler** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-11-25
+
+### Changed
+
+- Valheim 1.0.30 or later required due to changes in the base game.
+- Precision Mode snaps the ghost, edited pieces and the Placement panel to the 0.5-degree angles that the world save
+  method actually saves - rotation steps round to 0.5 degrees and don't go smaller, because IG is very concerned
+  about not wasting digits with decimal angles.
+
+### Fixed
+
+- Build Camera auto-pickup no longer flashes a raw `[msg_inventoryfull]` token on a full inventory.
+
+### Removed
+
+- Temporary 1.x to 2.0 config migration. Anyone jumping straight from 1.x will need to delete their old config file.
+
 ## [2.2.0] - 2026-11-21
 
 ### Added
